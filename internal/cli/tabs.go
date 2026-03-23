@@ -2,7 +2,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -92,7 +91,7 @@ var tabCmd = &cobra.Command{
 		}
 
 		if flagJSON {
-			return f.PrintJSON(json.RawMessage(resp.Result))
+			return f.PrintJSON(resp.Result)
 		}
 		f.PrintSuccess("已切換至分頁 %d", index)
 		return nil
@@ -133,7 +132,7 @@ var closeTabCmd = &cobra.Command{
 		}
 
 		if flagJSON {
-			return f.PrintJSON(json.RawMessage(resp.Result))
+			return f.PrintJSON(resp.Result)
 		}
 		if len(args) == 1 {
 			f.PrintSuccess("已關閉分頁 %s", args[0])

@@ -375,7 +375,7 @@ func RegisterAllTools(s *Server) {
 // 若 params 為 nil，則不帶參數傳送。
 func (s *Server) callExtensionRaw(ctx context.Context, method string, params json.RawMessage) (any, error) {
 	if s.transport == nil || !s.transport.IsConnected() {
-		return nil, fmt.Errorf("Extension 未連線")
+		return nil, fmt.Errorf("extension 未連線")
 	}
 
 	id := generateID()

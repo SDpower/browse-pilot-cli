@@ -2,7 +2,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -96,7 +95,7 @@ var getHtmlCmd = &cobra.Command{
 
 		// JSON 模式：輸出原始結果
 		if flagJSON {
-			return f.PrintJSON(json.RawMessage(resp.Result))
+			return f.PrintJSON(resp.Result)
 		}
 
 		// Human 模式：直接輸出 HTML 字串
@@ -140,7 +139,7 @@ var getTextCmd = &cobra.Command{
 		}
 
 		if flagJSON {
-			return f.PrintJSON(json.RawMessage(resp.Result))
+			return f.PrintJSON(resp.Result)
 		}
 
 		// Human 模式：直接輸出文字內容
@@ -184,7 +183,7 @@ var getValueCmd = &cobra.Command{
 		}
 
 		if flagJSON {
-			return f.PrintJSON(json.RawMessage(resp.Result))
+			return f.PrintJSON(resp.Result)
 		}
 
 		// Human 模式：直接輸出欄位值
@@ -229,7 +228,7 @@ var getAttributesCmd = &cobra.Command{
 
 		// JSON 模式：輸出原始屬性結構
 		if flagJSON {
-			return f.PrintJSON(json.RawMessage(resp.Result))
+			return f.PrintJSON(resp.Result)
 		}
 
 		// Human 模式：以 key=value 逐行列出屬性
@@ -276,7 +275,7 @@ var getBboxCmd = &cobra.Command{
 
 		// JSON 模式：輸出原始 bounding box 結構
 		if flagJSON {
-			return f.PrintJSON(json.RawMessage(resp.Result))
+			return f.PrintJSON(resp.Result)
 		}
 
 		// Human 模式：以格式化方式輸出座標與尺寸

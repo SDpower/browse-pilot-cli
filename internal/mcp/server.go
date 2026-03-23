@@ -205,7 +205,7 @@ func (s *Server) handleInitialize(req *jsonRPCRequest) {
 
 // handleToolsList 回傳所有已註冊 tool 的清單。
 func (s *Server) handleToolsList(req *jsonRPCRequest) {
-	var tools []map[string]any
+	tools := make([]map[string]any, 0, len(s.tools))
 	for _, t := range s.tools {
 		tools = append(tools, map[string]any{
 			"name":        t.Name,
@@ -260,7 +260,7 @@ func (s *Server) handleToolsCall(ctx context.Context, req *jsonRPCRequest) {
 
 // handleResourcesList 回傳所有已註冊 resource 的清單。
 func (s *Server) handleResourcesList(req *jsonRPCRequest) {
-	var resources []map[string]any
+	resources := make([]map[string]any, 0, len(s.resources))
 	for _, r := range s.resources {
 		res := map[string]any{
 			"uri":  r.URI,
@@ -316,7 +316,7 @@ func (s *Server) handleResourcesRead(ctx context.Context, req *jsonRPCRequest) {
 }
 
 // sendResult 傳送 JSON-RPC 成功回應至 stdout。
-func (s *Server) sendResult(id any, result any) {
+func (s *Server) sendResult(id, result any) {
 	s.send(&jsonRPCResponse{
 		JSONRPC: "2.0",
 		ID:      id,

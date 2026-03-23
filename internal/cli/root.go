@@ -218,4 +218,3 @@ func sendCommand(tr transport.Transport, method string, params any) (*transport.
 func getFormatter() *output.Formatter {
 	return output.NewFormatter(flagJSON, flagVerbose)
 }
-

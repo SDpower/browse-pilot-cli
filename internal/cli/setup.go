@@ -73,7 +73,7 @@ func installNMHost(browser, bpPath string, f *output.Formatter) error {
 
 	// 建立目錄（若尚未存在）
 	dir := filepath.Dir(nmPath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return fmt.Errorf("建立目錄失敗: %w", err)
 	}
 
@@ -100,7 +100,7 @@ func installNMHost(browser, bpPath string, f *output.Formatter) error {
 		return fmt.Errorf("序列化 manifest 失敗: %w", err)
 	}
 
-	if err := os.WriteFile(nmPath, data, 0644); err != nil { //nolint:gosec
+	if err := os.WriteFile(nmPath, data, 0o644); err != nil { //nolint:gosec // manifest 檔案需要讓瀏覽器讀取，不需嚴格限制權限
 		return fmt.Errorf("寫入 manifest 失敗: %w", err)
 	}
 

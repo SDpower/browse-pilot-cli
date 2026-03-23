@@ -59,7 +59,7 @@ func (f *Formatter) PrintResult(result any) error {
 // PrintSuccess 輸出成功訊息（綠色）
 func (f *Formatter) PrintSuccess(format string, args ...any) {
 	if f.jsonMode {
-		f.PrintJSON(map[string]any{"success": true, "message": fmt.Sprintf(format, args...)}) //nolint:errcheck
+		f.PrintJSON(map[string]any{"success": true, "message": fmt.Sprintf(format, args...)}) //nolint:errcheck // PrintSuccess 本身不回傳 error，JSON 寫入失敗無法向上傳遞
 		return
 	}
 	green := color.New(color.FgGreen).SprintFunc()
@@ -69,7 +69,7 @@ func (f *Formatter) PrintSuccess(format string, args ...any) {
 // PrintError 輸出錯誤訊息（紅色）
 func (f *Formatter) PrintError(format string, args ...any) {
 	if f.jsonMode {
-		f.PrintJSON(map[string]any{"error": fmt.Sprintf(format, args...)}) //nolint:errcheck
+		f.PrintJSON(map[string]any{"error": fmt.Sprintf(format, args...)}) //nolint:errcheck // PrintError 本身不回傳 error，JSON 寫入失敗無法向上傳遞
 		return
 	}
 	red := color.New(color.FgRed).SprintFunc()

@@ -10,13 +10,13 @@ import (
 
 // ScreenshotResult 代表截圖回傳結果
 type ScreenshotResult struct {
-	Data   string `json:"data"`             // base64 編碼的 PNG
+	Data   string `json:"data"` // base64 編碼的 PNG
 	Width  int    `json:"width,omitempty"`
 	Height int    `json:"height,omitempty"`
 }
 
 // SaveScreenshot 將 base64 截圖儲存至檔案
-func SaveScreenshot(base64Data string, path string) error {
+func SaveScreenshot(base64Data, path string) error {
 	// 解碼 base64
 	data, err := base64.StdEncoding.DecodeString(base64Data)
 	if err != nil {
@@ -25,12 +25,12 @@ func SaveScreenshot(base64Data string, path string) error {
 
 	// 確保目錄存在
 	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return fmt.Errorf("建立目錄失敗: %w", err)
 	}
 
 	// 寫入檔案
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	if err := os.WriteFile(path, data, 0o644); err != nil {
 		return fmt.Errorf("儲存截圖失敗: %w", err)
 	}
 

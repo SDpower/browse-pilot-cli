@@ -84,7 +84,7 @@ func formatElement(el StateElement) string {
 		if len(name) > 40 {
 			name = name[:37] + "..."
 		}
-		parts = append(parts, fmt.Sprintf(`"%s"`, name))
+		parts = append(parts, fmt.Sprintf("%q", name))
 	}
 
 	// value（如果有）

@@ -1,0 +1,74 @@
+version: "2"
+run:
+  modules-download-mode: readonly
+output:
+  formats:
+    text:
+      path: stdout
+linters:
+  enable:
+    - bodyclose
+    - gocritic
+    - misspell
+    - nilerr
+    - prealloc
+    - unconvert
+    - unparam
+    - whitespace
+  settings:
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+    govet:
+      disable:
+        - fieldalignment
+      enable-all: true
+    misspell:
+      locale: US
+    prealloc:
+      simple: true
+      for-loops: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - errcheck
+          - unparam
+        path: _test\.go
+      - linters:
+          - gosec
+        path: internal/python/session\.go
+        text: G204
+    paths:
+      - node_modules
+      - dist
+      - vendor
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/SDpower/browse-pilot-cli
+  exclusions:
+    generated: lax
+    paths:
+      - node_modules
+      - dist
+      - vendor
+      - third_party$
+      - builtin$
+      - examples$

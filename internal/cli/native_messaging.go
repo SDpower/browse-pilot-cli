@@ -107,8 +107,8 @@ func writeNMResponse(w io.Writer, resp *transport.Response) error {
 	// 寫入 4 bytes 的訊息長度（little-endian）
 	lenBuf := make([]byte, 4)
 	binary.LittleEndian.PutUint32(lenBuf, uint32(len(data)))
-	if _, err := w.Write(lenBuf); err != nil {
-		return err
+	if _, writeErr := w.Write(lenBuf); writeErr != nil {
+		return writeErr
 	}
 
 	// 寫入 JSON 本體

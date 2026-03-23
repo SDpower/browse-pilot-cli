@@ -20,7 +20,7 @@ var sessionsCmd = &cobra.Command{
 			}
 			return nil
 		}
-		defer tr.Close() //nolint:errcheck
+		defer tr.Close() //nolint:errcheck // Close 錯誤在 defer 中無法處理
 
 		resp, err := sendCommand(tr, "get_status", nil)
 		if err != nil {

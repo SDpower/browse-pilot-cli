@@ -2,7 +2,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -74,7 +73,7 @@ var backCmd = &cobra.Command{
 			return resp.Error
 		}
 		if flagJSON {
-			return f.PrintJSON(json.RawMessage(resp.Result))
+			return f.PrintJSON(resp.Result)
 		}
 		f.PrintSuccess("已返回上一頁")
 		return nil
@@ -103,7 +102,7 @@ var forwardCmd = &cobra.Command{
 			return resp.Error
 		}
 		if flagJSON {
-			return f.PrintJSON(json.RawMessage(resp.Result))
+			return f.PrintJSON(resp.Result)
 		}
 		f.PrintSuccess("已前進至下一頁")
 		return nil
@@ -132,7 +131,7 @@ var reloadCmd = &cobra.Command{
 			return resp.Error
 		}
 		if flagJSON {
-			return f.PrintJSON(json.RawMessage(resp.Result))
+			return f.PrintJSON(resp.Result)
 		}
 		f.PrintSuccess("已重新載入")
 		return nil
@@ -173,7 +172,7 @@ var scrollCmd = &cobra.Command{
 			return resp.Error
 		}
 		if flagJSON {
-			return f.PrintJSON(json.RawMessage(resp.Result))
+			return f.PrintJSON(resp.Result)
 		}
 
 		// 依方向輸出對應的中文訊息

@@ -18,7 +18,12 @@ func dialTestWS(t *testing.T, port int) *websocket.Conn {
 	var conn *websocket.Conn
 	var err error
 	for i := 0; i < 20; i++ {
-		conn, _, err = websocket.DefaultDialer.Dial(url, nil)
+		var resp *http.Response
+		conn, resp, err = websocket.DefaultDialer.Dial(url, nil)
+		// 無論連線是否成功，都需關閉 response body 避免資源洩漏
+		if resp != nil && resp.Body != nil {
+			resp.Body.Close()
+		}
 		if err == nil {
 			return conn
 		}

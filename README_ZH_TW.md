@@ -1,5 +1,8 @@
 # browse-pilot-cli (bp)
 
+[![Version](https://img.shields.io/badge/version-0.1.0-blue)](CHANGELOG.md)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 跨瀏覽器自動化 CLI 工具，透過 WebExtension API 控制 Firefox、Chrome、Edge，不依賴 CDP。
 
 ## 特色
@@ -340,6 +343,10 @@ make extension-lint
 - [MCP 整合指南](docs/MCP.md)
 - [使用範例](docs/EXAMPLES.md)
 
+## 變更紀錄
+
+詳見 [CHANGELOG.md](CHANGELOG.md)。
+
 ## 授權
 
-MIT © [@SteveLuo](https://github.com/sdpower)
+[MIT](LICENSE) © [@SteveLuo](https://github.com/sdpower)

@@ -2,8 +2,6 @@
 package cli
 
 import (
-	"encoding/json"
-
 	"github.com/spf13/cobra"
 )
 
@@ -56,7 +54,7 @@ var waitSelectorCmd = &cobra.Command{
 		}
 
 		if flagJSON {
-			return f.PrintJSON(json.RawMessage(resp.Result))
+			return f.PrintJSON(resp.Result)
 		}
 		if hidden {
 			f.PrintSuccess("元素已消失: %s", args[0])
@@ -98,7 +96,7 @@ var waitTextCmd = &cobra.Command{
 		}
 
 		if flagJSON {
-			return f.PrintJSON(json.RawMessage(resp.Result))
+			return f.PrintJSON(resp.Result)
 		}
 		f.PrintSuccess("文字已出現: %s", args[0])
 		return nil
@@ -136,7 +134,7 @@ var waitUrlCmd = &cobra.Command{
 		}
 
 		if flagJSON {
-			return f.PrintJSON(json.RawMessage(resp.Result))
+			return f.PrintJSON(resp.Result)
 		}
 		f.PrintSuccess("URL 已符合 pattern: %s", args[0])
 		return nil

@@ -1,5 +1,8 @@
 # browse-pilot-cli (bp)
 
+[![Version](https://img.shields.io/badge/version-0.1.0-blue)](CHANGELOG.md)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 Cross-browser automation CLI that controls Firefox, Chrome, and Edge via WebExtension API — no CDP required.
 
 ## Features
@@ -340,6 +343,10 @@ make extension-lint
 - [MCP Integration Guide](docs/MCP.md)
 - [Usage Examples](docs/EXAMPLES.md)
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release history.
+
 ## License
 
-MIT © [@SteveLuo](https://github.com/sdpower)
+[MIT](LICENSE) © [@SteveLuo](https://github.com/sdpower)

@@ -54,8 +54,8 @@ func NewSession(pythonPath string) (*Session, error) {
 	// stderr 接到 /dev/null（避免 Python 錯誤訊息污染輸出協議）
 	cmd.Stderr = nil
 
-	if err := cmd.Start(); err != nil {
-		return nil, fmt.Errorf("啟動 Python 失敗: %w", err)
+	if startErr := cmd.Start(); startErr != nil {
+		return nil, fmt.Errorf("啟動 python 失敗: %w", startErr)
 	}
 
 	s := &Session{
@@ -69,11 +69,11 @@ func NewSession(pythonPath string) (*Session, error) {
 	line, err := s.stdout.ReadString('\n')
 	if err != nil {
 		s.Close()
-		return nil, fmt.Errorf("Python 啟動失敗: %w", err)
+		return nil, fmt.Errorf("python 啟動失敗: %w", err)
 	}
 	if !strings.HasPrefix(strings.TrimSpace(line), "__BP_READY__") {
 		s.Close()
-		return nil, fmt.Errorf("Python 啟動異常: %s", line)
+		return nil, fmt.Errorf("python 啟動異常: %s", line)
 	}
 
 	return s, nil
@@ -204,7 +204,7 @@ func (s *Session) Execute(ctx context.Context, code string) (*ExecResult, error)
 	defer s.mu.Unlock()
 
 	if !s.running {
-		return nil, fmt.Errorf("Python session 未啟動")
+		return nil, fmt.Errorf("python session 未啟動")
 	}
 
 	// 將程式碼以 JSON 編碼後寫入 Python stdin
@@ -246,7 +246,7 @@ func (s *Session) Execute(ctx context.Context, code string) (*ExecResult, error)
 				Traceback string `json:"traceback"`
 			}
 			if err := json.Unmarshal([]byte(payload), &errResult); err != nil {
-				return nil, fmt.Errorf("Python 執行錯誤（解碼失敗）: %s", payload)
+				return nil, fmt.Errorf("python 執行錯誤（解碼失敗）: %s", payload)
 			}
 			return nil, fmt.Errorf("%s", errResult.Error)
 
@@ -258,15 +258,15 @@ func (s *Session) Execute(ctx context.Context, code string) (*ExecResult, error)
 				if callErr != nil {
 					// 通知 Python 呼叫失敗
 					errMsg := mustJSON(callErr.Error())
-					fmt.Fprintf(s.stdin, "__BP_CALL_ERROR__%s\n", errMsg) //nolint:errcheck
+					fmt.Fprintf(s.stdin, "__BP_CALL_ERROR__%s\n", errMsg) //nolint:errcheck // stdin 寫入失敗無法有效回傳，僅能忽略
 				} else {
 					// 將結果回傳給 Python
 					resultStr := mustJSON(result)
-					fmt.Fprintf(s.stdin, "__BP_CALL_RESULT__%s\n", resultStr) //nolint:errcheck
+					fmt.Fprintf(s.stdin, "__BP_CALL_RESULT__%s\n", resultStr) //nolint:errcheck // stdin 寫入失敗無法有效回傳，僅能忽略
 				}
 			} else {
 				// 尚未設定 browserCallback
-				fmt.Fprintf(s.stdin, "__BP_CALL_ERROR__%s\n", mustJSON("browser 物件未初始化")) //nolint:errcheck
+				fmt.Fprintf(s.stdin, "__BP_CALL_ERROR__%s\n", mustJSON("browser 物件未初始化")) //nolint:errcheck // stdin 寫入失敗無法有效回傳，僅能忽略
 			}
 			// 繼續等待下一行輸出
 		}
@@ -303,8 +303,8 @@ func (s *Session) Close() error {
 		s.stdin.Close()
 	}
 	if s.cmd != nil && s.cmd.Process != nil {
-		s.cmd.Process.Kill()
-		s.cmd.Wait() //nolint:errcheck
+		_ = s.cmd.Process.Kill()
+		s.cmd.Wait() //nolint:errcheck // Kill 後等待結束，錯誤可忽略
 	}
 	return nil
 }

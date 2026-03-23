@@ -26,7 +26,7 @@ var statusCmd = &cobra.Command{
 			}
 			return nil // 狀態查詢不回傳 error，僅顯示訊息
 		}
-		defer tr.Close() //nolint:errcheck
+		defer tr.Close() //nolint:errcheck // Close 錯誤在 defer 中無法處理
 
 		// 向 Extension 查詢狀態
 		resp, err := sendCommand(tr, "get_status", nil)

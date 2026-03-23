@@ -2,7 +2,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -141,7 +140,7 @@ var uploadCmd = &cobra.Command{
 		filePath := args[1]
 
 		// 檢查檔案是否存在
-		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		if _, statErr := os.Stat(filePath); os.IsNotExist(statErr) {
 			return fmt.Errorf("檔案不存在: %s", filePath)
 		}
 
@@ -179,7 +178,7 @@ func simpleCommand(method string, params any, successMsg string) error {
 	}
 
 	if flagJSON {
-		return f.PrintJSON(json.RawMessage(resp.Result))
+		return f.PrintJSON(resp.Result)
 	}
 	f.PrintSuccess("%s", successMsg)
 	return nil

@@ -42,7 +42,7 @@ var evalCmd = &cobra.Command{
 			}
 			if err := resp.ParseResult(&result); err != nil {
 				// 若解析失敗，直接輸出原始 JSON
-				return f.PrintJSON(json.RawMessage(resp.Result))
+				return f.PrintJSON(resp.Result)
 			}
 			return f.PrintJSON(result)
 		}

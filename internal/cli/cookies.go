@@ -51,7 +51,7 @@ var cookiesGetCmd = &cobra.Command{
 
 		// JSON 模式：輸出原始結果
 		if flagJSON {
-			return f.PrintJSON(json.RawMessage(resp.Result))
+			return f.PrintJSON(resp.Result)
 		}
 
 		// Human 模式：解析 cookies 並逐行列出 name=value
@@ -119,7 +119,7 @@ var cookiesSetCmd = &cobra.Command{
 		}
 
 		if flagJSON {
-			return f.PrintJSON(json.RawMessage(resp.Result))
+			return f.PrintJSON(resp.Result)
 		}
 		f.PrintSuccess("已設定 cookie: %s", args[0])
 		return nil
@@ -157,7 +157,7 @@ var cookiesClearCmd = &cobra.Command{
 		}
 
 		if flagJSON {
-			return f.PrintJSON(json.RawMessage(resp.Result))
+			return f.PrintJSON(resp.Result)
 		}
 		if url != "" {
 			f.PrintSuccess("已清除 %s 的 cookies", url)
@@ -198,13 +198,13 @@ var cookiesExportCmd = &cobra.Command{
 		var result struct {
 			Cookies json.RawMessage `json:"cookies"`
 		}
-		if err := resp.ParseResult(&result); err != nil {
-			return err
+		if parseErr := resp.ParseResult(&result); parseErr != nil {
+			return parseErr
 		}
 
 		var cookies []any
-		if err := json.Unmarshal(result.Cookies, &cookies); err != nil {
-			return fmt.Errorf("解析 cookies 失敗: %w", err)
+		if unmarshalErr := json.Unmarshal(result.Cookies, &cookies); unmarshalErr != nil {
+			return fmt.Errorf("解析 cookies 失敗: %w", unmarshalErr)
 		}
 
 		// 以 pretty-printed JSON 格式寫入檔案
@@ -212,7 +212,7 @@ var cookiesExportCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("序列化失敗: %w", err)
 		}
-		if err := os.WriteFile(filePath, data, 0644); err != nil {
+		if err := os.WriteFile(filePath, data, 0o644); err != nil {
 			return fmt.Errorf("寫入檔案失敗: %w", err)
 		}
 
@@ -236,8 +236,8 @@ var cookiesImportCmd = &cobra.Command{
 		}
 
 		var cookies []map[string]any
-		if err := json.Unmarshal(data, &cookies); err != nil {
-			return fmt.Errorf("JSON 解析失敗: %w", err)
+		if unmarshalErr := json.Unmarshal(data, &cookies); unmarshalErr != nil {
+			return fmt.Errorf("JSON 解析失敗: %w", unmarshalErr)
 		}
 
 		tr, err := getTransport()
