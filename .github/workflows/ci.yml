@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  go:
+    name: Go Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: go test ./... -count=1 -timeout 120s
+
+      - name: Vet
+        run: go vet ./...
+
+  lint:
+    name: Go Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: v2.11.4
+
+  eslint:
+    name: Extension Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - run: npm ci
+
+      - run: npx eslint extension/
+
+  extension-build:
+    name: Extension Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Extensions
+        run: bash scripts/build-extensions.sh
+
+      - name: Verify dist
+        run: |
+          test -f dist/firefox/manifest.json
+          test -f dist/chrome/manifest.json
+          test -f dist/edge/manifest.json
