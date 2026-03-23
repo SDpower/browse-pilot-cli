@@ -34,7 +34,7 @@ CLI (Go) ←→ stdin/stdout ←→ Chrome/Edge Service Worker ←→ Content Sc
 
 - Service Worker 透過 `runtime.connectNative` 建立 NM 通道
 - CLI 本身兼任 NM Host（無需獨立程序）
-- 需要 `bp setup chrome` / `bp setup edge` 安裝 NM Host 清單
+- 需要 `bp_cli setup chrome` / `bp_cli setup edge` 安裝 NM Host 清單
 - 訊息最大 1 MB（大型截圖需分塊）
 
 ---
@@ -72,7 +72,7 @@ CLI (Go) ←→ stdin/stdout ←→ Chrome/Edge Service Worker ←→ Content Sc
 
 ### 跨瀏覽器通用限制
 
-- Content Script 在 `document_idle` 注入，頁面元素可能尚未就緒，需搭配 `bp wait` 指令
+- Content Script 在 `document_idle` 注入，頁面元素可能尚未就緒，需搭配 `bp_cli wait` 指令
 - 跨來源 iframe 內的元素無法存取（瀏覽器安全性限制）
 - `eval_js` 執行的程式碼在頁面沙箱中，無法存取 Extension 的 API
 
@@ -85,7 +85,7 @@ CLI (Go) ←→ stdin/stdout ←→ Chrome/Edge Service Worker ←→ Content Sc
 
 - Native Messaging 訊息大小上限 **1 MB**，全頁截圖等大型資料需分塊處理
 - Service Worker 閒置 30 秒後休眠，CLI 須透過 keepalive 維持連線
-- 需要手動安裝 NM Host 清單（`bp setup chrome`），無法自動部署
+- 需要手動安裝 NM Host 清單（`bp_cli setup chrome`），無法自動部署
 - Windows 上 NM Host 清單路徑為 Registry，需要寫入權限
 
 ### Edge 特有注意事項

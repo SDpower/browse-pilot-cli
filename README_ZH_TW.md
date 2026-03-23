@@ -70,12 +70,12 @@ bash scripts/build-extensions.sh
 Chrome 和 Edge 透過 Native Messaging 通訊，需先執行設定指令：
 
 ```bash
-bp setup firefox
-bp setup chrome
-bp setup edge
+bp_cli setup firefox
+bp_cli setup chrome
+bp_cli setup edge
 
 # 或一次設定所有瀏覽器
-bp setup --all
+bp_cli setup --all
 ```
 
 ## 快速開始
@@ -83,60 +83,60 @@ bp setup --all
 ### 檢查環境
 
 ```bash
-bp doctor
+bp_cli doctor
 ```
 
 ### 基本操作
 
 ```bash
 # 開啟網頁
-bp open https://example.com
+bp_cli open https://example.com
 
 # 取得頁面狀態（列出所有可互動元素）
-bp state
+bp_cli state
 
 # 點擊元素（依索引）
-bp click 0
+bp_cli click 0
 
 # 輸入文字到指定欄位
-bp input 1 "hello world"
+bp_cli input 1 "hello world"
 
 # 截圖
-bp screenshot output.png
+bp_cli screenshot output.png
 ```
 
 ### 等待與擷取
 
 ```bash
 # 等待元素出現
-bp wait selector "table.result"
+bp_cli wait selector "table.result"
 
 # 等待頁面文字
-bp wait text "載入完成"
+bp_cli wait text "載入完成"
 
 # 執行 JavaScript
-bp eval "document.querySelectorAll('tr').length"
+bp_cli eval "document.querySelectorAll('tr').length"
 
 # 取得頁面資訊
-bp get title
-bp get html --selector "table"
-bp get text 2
+bp_cli get title
+bp_cli get html --selector "table"
+bp_cli get text 2
 ```
 
 ### Python 自動化
 
 ```bash
 # 執行 Python 程式碼（可存取 browser 物件）
-bp python "result = browser.state(); print(len(result['elements']))"
+bp_cli python "result = browser.state(); print(len(result['elements']))"
 
 # 執行 Python 腳本
-bp python --file script.py
+bp_cli python --file script.py
 
 # 列出 session 變數
-bp python --vars
+bp_cli python --vars
 
 # 重置 session
-bp python --reset
+bp_cli python --reset
 ```
 
 ## 指令參考
@@ -158,58 +158,58 @@ bp python --reset
 
 | 指令 | 說明 |
 |------|------|
-| `bp open <url>` | 開啟指定網址 |
-| `bp back` | 上一頁 |
-| `bp forward` | 下一頁 |
-| `bp reload` | 重新載入 |
-| `bp scroll <up\|down>` | 捲動頁面（可加 `--amount <px>`） |
+| `bp_cli open <url>` | 開啟指定網址 |
+| `bp_cli back` | 上一頁 |
+| `bp_cli forward` | 下一頁 |
+| `bp_cli reload` | 重新載入 |
+| `bp_cli scroll <up\|down>` | 捲動頁面（可加 `--amount <px>`） |
 
 ### 頁面檢查
 
 | 指令 | 說明 |
 |------|------|
-| `bp state` | 列出目前 URL、標題與所有可互動元素 |
-| `bp screenshot [path]` | 截圖（省略路徑則輸出 base64，可加 `--full`） |
+| `bp_cli state` | 列出目前 URL、標題與所有可互動元素 |
+| `bp_cli screenshot [path]` | 截圖（省略路徑則輸出 base64，可加 `--full`） |
 
 ### 互動
 
 | 指令 | 說明 |
 |------|------|
-| `bp click <index>` | 點擊元素（也可 `bp click <x> <y>` 座標點擊） |
-| `bp dblclick <index>` | 雙擊元素 |
-| `bp rightclick <index>` | 右鍵點擊元素 |
-| `bp hover <index>` | 滑鼠懸停 |
-| `bp type <text>` | 輸入文字（焦點元素） |
-| `bp input <index> <text>` | 輸入文字到指定欄位 |
-| `bp keys <keys>` | 傳送按鍵（如 `Enter`、`Ctrl+a`） |
-| `bp select <index> <value>` | 選取下拉選單選項 |
-| `bp upload <index> <path>` | 上傳檔案至 file input |
+| `bp_cli click <index>` | 點擊元素（也可 `bp_cli click <x> <y>` 座標點擊） |
+| `bp_cli dblclick <index>` | 雙擊元素 |
+| `bp_cli rightclick <index>` | 右鍵點擊元素 |
+| `bp_cli hover <index>` | 滑鼠懸停 |
+| `bp_cli type <text>` | 輸入文字（焦點元素） |
+| `bp_cli input <index> <text>` | 輸入文字到指定欄位 |
+| `bp_cli keys <keys>` | 傳送按鍵（如 `Enter`、`Ctrl+a`） |
+| `bp_cli select <index> <value>` | 選取下拉選單選項 |
+| `bp_cli upload <index> <path>` | 上傳檔案至 file input |
 
 ### 分頁管理
 
 | 指令 | 說明 |
 |------|------|
-| `bp tabs` | 列出所有分頁 |
-| `bp tab <index>` | 切換到指定分頁 |
-| `bp close-tab [index]` | 關閉分頁（預設當前） |
+| `bp_cli tabs` | 列出所有分頁 |
+| `bp_cli tab <index>` | 切換到指定分頁 |
+| `bp_cli close-tab [index]` | 關閉分頁（預設當前） |
 
 ### Cookie
 
 | 指令 | 說明 |
 |------|------|
-| `bp cookies get [--url <url>]` | 取得 cookie 列表 |
-| `bp cookies set <name> <value>` | 設定 cookie（可加 `--domain`、`--secure`、`--same-site`） |
-| `bp cookies clear [--url <url>]` | 清除 cookie |
-| `bp cookies export <file>` | 匯出 cookie 到 JSON 檔 |
-| `bp cookies import <file>` | 從 JSON 檔匯入 cookie |
+| `bp_cli cookies get [--url <url>]` | 取得 cookie 列表 |
+| `bp_cli cookies set <name> <value>` | 設定 cookie（可加 `--domain`、`--secure`、`--same-site`） |
+| `bp_cli cookies clear [--url <url>]` | 清除 cookie |
+| `bp_cli cookies export <file>` | 匯出 cookie 到 JSON 檔 |
+| `bp_cli cookies import <file>` | 從 JSON 檔匯入 cookie |
 
 ### 等待
 
 | 指令 | 說明 |
 |------|------|
-| `bp wait selector <css>` | 等待 CSS selector 出現（可加 `--hidden` 等待消失） |
-| `bp wait text <text>` | 等待頁面出現指定文字 |
-| `bp wait url <pattern>` | 等待 URL 符合 pattern |
+| `bp_cli wait selector <css>` | 等待 CSS selector 出現（可加 `--hidden` 等待消失） |
+| `bp_cli wait text <text>` | 等待頁面出現指定文字 |
+| `bp_cli wait url <pattern>` | 等待 URL 符合 pattern |
 
 所有 wait 指令支援 `--timeout <ms>`（預設 30000）。
 
@@ -217,36 +217,36 @@ bp python --reset
 
 | 指令 | 說明 |
 |------|------|
-| `bp get title` | 取得頁面標題 |
-| `bp get html [--selector <css>]` | 取得 HTML 內容 |
-| `bp get text <index>` | 取得元素文字 |
-| `bp get value <index>` | 取得表單欄位值 |
-| `bp get attributes <index>` | 取得元素所有屬性 |
-| `bp get bbox <index>` | 取得元素位置與尺寸 |
+| `bp_cli get title` | 取得頁面標題 |
+| `bp_cli get html [--selector <css>]` | 取得 HTML 內容 |
+| `bp_cli get text <index>` | 取得元素文字 |
+| `bp_cli get value <index>` | 取得表單欄位值 |
+| `bp_cli get attributes <index>` | 取得元素所有屬性 |
+| `bp_cli get bbox <index>` | 取得元素位置與尺寸 |
 
 ### 執行
 
 | 指令 | 說明 |
 |------|------|
-| `bp eval <code>` | 在頁面 context 執行 JavaScript |
-| `bp python <code>` | 執行 Python（可存取 `browser` 物件） |
-| `bp python --file <path>` | 執行 Python 腳本 |
-| `bp python --vars` | 列出 session 變數 |
-| `bp python --reset` | 重置 Python session |
+| `bp_cli eval <code>` | 在頁面 context 執行 JavaScript |
+| `bp_cli python <code>` | 執行 Python（可存取 `browser` 物件） |
+| `bp_cli python --file <path>` | 執行 Python 腳本 |
+| `bp_cli python --vars` | 列出 session 變數 |
+| `bp_cli python --reset` | 重置 Python session |
 
 ### 系統
 
 | 指令 | 說明 |
 |------|------|
-| `bp doctor` | 檢測瀏覽器連線狀態 |
-| `bp status` | 顯示目前連線資訊 |
-| `bp sessions` | 列出活躍 session |
-| `bp close [--all]` | 關閉連線 |
-| `bp setup <browser>` | 設定 Native Messaging Host（可加 `--all`） |
+| `bp_cli doctor` | 檢測瀏覽器連線狀態 |
+| `bp_cli status` | 顯示目前連線資訊 |
+| `bp_cli sessions` | 列出活躍 session |
+| `bp_cli close [--all]` | 關閉連線 |
+| `bp_cli setup <browser>` | 設定 Native Messaging Host（可加 `--all`） |
 
 ## MCP 整合（Claude Code）
 
-`bp` 支援 [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)，可直接作為 Claude Code 的瀏覽器控制工具。
+`bp_cli` 支援 [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)，可直接作為 Claude Code 的瀏覽器控制工具。
 
 ### 設定
 
@@ -256,7 +256,7 @@ bp python --reset
 {
   "mcpServers": {
     "browse-pilot": {
-      "command": "bp",
+      "command": "bp_cli",
       "args": ["--mcp"],
       "env": {
         "BP_BROWSER": "firefox",

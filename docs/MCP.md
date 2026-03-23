@@ -4,7 +4,7 @@
 
 MCP（Model Context Protocol）是 Anthropic 制定的開放協議，讓 AI Agent（如 Claude Code）能夠以標準化方式呼叫外部工具。
 
-browse-pilot-cli 內建 MCP Server 模式，透過 `--mcp` 旗標啟動後，Claude Code 可直接以自然語言指示 CLI 操作瀏覽器，無需手動撰寫指令。
+browse-pilot-cli 內建 MCP Server 模式，透過 `bp_cli --mcp` 旗標啟動後，Claude Code 可直接以自然語言指示 CLI 操作瀏覽器，無需手動撰寫指令。
 
 ---
 
@@ -16,7 +16,7 @@ browse-pilot-cli 內建 MCP Server 模式，透過 `--mcp` 旗標啟動後，Cla
 {
   "mcpServers": {
     "browse-pilot": {
-      "command": "bp",
+      "command": "bp_cli",
       "args": ["--mcp"],
       "env": {
         "BROWSER": "firefox"
@@ -32,7 +32,7 @@ browse-pilot-cli 內建 MCP Server 模式，透過 `--mcp` 旗標啟動後，Cla
 {
   "mcpServers": {
     "browse-pilot-chrome": {
-      "command": "bp",
+      "command": "bp_cli",
       "args": ["--mcp", "--browser", "chrome", "--port", "9223"]
     }
   }
@@ -126,7 +126,7 @@ Claude Code 會自動呼叫：
 ```markdown
 ## 瀏覽器自動化
 
-本專案使用 browse-pilot-cli（`bp`）控制瀏覽器。
+本專案使用 browse-pilot-cli（`bp_cli`）控制瀏覽器。
 MCP Server 已在 mcp.json 設定完成，可直接呼叫以下工具：
 
 - navigate, get_state, click, input_text, screenshot
@@ -137,8 +137,21 @@ MCP Server 已在 mcp.json 設定完成，可直接呼叫以下工具：
 
 ---
 
+## 運作原理
+
+`bp_cli --mcp` 啟動時的流程：
+
+1. **啟動 WS/NM server** — 在背景啟動 WebSocket server（Firefox）或 NM host（Chrome/Edge），不阻塞等待 Extension 連入
+2. **回應 MCP initialize** — MCP server 立即開始讀取 stdin，回應 Claude Code 的 `initialize` 請求
+3. **Extension 連入** — 瀏覽器 Extension 在背景自動連入 WS server
+4. **Tool 呼叫** — Claude Code 呼叫 `bp_navigate` 等 MCP tool 時，`Send()` 會自動等待 Extension 連線就緒後再轉發指令
+
+因此 **Extension 不需要在 MCP 啟動前就連上**，MCP server 會先回應協議握手，Extension 隨後連入即可。
+
 ## 注意事項
 
 - MCP Server 透過 stdio（標準輸入/輸出）與 Claude Code 通訊，啟動後不應有其他程序佔用 stdin/stdout
-- 若瀏覽器未連線，所有 Tool 呼叫將回傳 connection error
+- verbose 日誌寫入 stderr，不會干擾 MCP stdio 通訊
+- 若瀏覽器 Extension 尚未連入，Tool 呼叫會等待連線（受 `--timeout` 控制，預設 30 秒）
 - 大型截圖（全頁）在 Chrome/Edge 下可能因 NM 1MB 限制而失敗，建議使用 Firefox 進行全頁截圖
+- Firefox 使用 WebSocket 長連線，MCP 模式下 Extension 連入後保持連線不斷開

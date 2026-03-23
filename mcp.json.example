@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "browse-pilot": {
-      "command": "bp",
+      "command": "bp_cli",
       "args": ["--mcp"],
       "env": {
         "BP_BROWSER": "firefox",

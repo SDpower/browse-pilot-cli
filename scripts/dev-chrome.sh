@@ -11,5 +11,5 @@ bash "$(dirname "$0")/build-extensions.sh"
 
 echo ""
 echo "▸ 請在 Chrome chrome://extensions 載入: dist/chrome/"
-echo "▸ 請確認已執行: bp setup chrome"
+echo "▸ 請確認已執行: bp_cli setup chrome"
 echo ""

@@ -40,10 +40,10 @@ var setupCmd = &cobra.Command{
 			return fmt.Errorf("請指定瀏覽器或使用 --all")
 		}
 
-		// 取得 bp binary 的絕對路徑，寫入 manifest 中供瀏覽器呼叫
+		// 取得 bp_cli binary 的絕對路徑，寫入 manifest 中供瀏覽器呼叫
 		bpPath, err := os.Executable()
 		if err != nil {
-			return fmt.Errorf("無法取得 bp 路徑: %w", err)
+			return fmt.Errorf("無法取得 bp_cli 路徑: %w", err)
 		}
 		bpPath, err = filepath.Abs(bpPath)
 		if err != nil {
@@ -64,7 +64,7 @@ var setupCmd = &cobra.Command{
 }
 
 // installNMHost 為指定瀏覽器寫入 Native Messaging host manifest 檔案。
-// bpPath 是 bp binary 的絕對路徑，manifest 中需引用此路徑。
+// bpPath 是 bp_cli binary 的絕對路徑，manifest 中需引用此路徑。
 func installNMHost(browser, bpPath string, f *output.Formatter) error {
 	nmPath := transport.NMHostPath(browser)
 	if nmPath == "" {

@@ -202,6 +202,83 @@ func TestServerInitializedNotification(t *testing.T) {
 	}
 }
 
+// TestServerInitializeWithoutTransport 驗證 MCP server 在 transport 未連線時
+// 仍能正常回應 initialize 和 tools/list — 這是 MCP 模式的核心行為：
+// server 先啟動回應協議握手，Extension 隨後連入。
+func TestServerInitializeWithoutTransport(t *testing.T) {
+	// transport 為 nil，模擬 Extension 尚未連入
+	s := NewServer(nil, false)
+	RegisterAllTools(s)
+	RegisterAllResources(s)
+
+	// 測試 initialize
+	var outBuf bytes.Buffer
+	s.writer = &outBuf
+
+	initReq := jsonRPCRequest{JSONRPC: "2.0", ID: 1, Method: "initialize",
+		Params: json.RawMessage(`{"protocolVersion":"2024-11-05"}`)}
+	s.handleRequest(context.Background(), &initReq)
+
+	var initResp jsonRPCResponse
+	if err := json.Unmarshal(outBuf.Bytes(), &initResp); err != nil {
+		t.Fatalf("initialize 回應解析失敗: %v", err)
+	}
+	if initResp.Error != nil {
+		t.Errorf("initialize 不應有錯誤: %v", initResp.Error)
+	}
+
+	// 測試 tools/list（也不需要 transport）
+	outBuf.Reset()
+	listReq := jsonRPCRequest{JSONRPC: "2.0", ID: 2, Method: "tools/list"}
+	s.handleRequest(context.Background(), &listReq)
+
+	var listResp jsonRPCResponse
+	if err := json.Unmarshal(outBuf.Bytes(), &listResp); err != nil {
+		t.Fatalf("tools/list 回應解析失敗: %v", err)
+	}
+	if listResp.Error != nil {
+		t.Errorf("tools/list 不應有錯誤: %v", listResp.Error)
+	}
+}
+
+// TestServerToolCallWithoutTransport 驗證 transport 未連線時
+// tool call 回傳「Extension 未連線」錯誤而非 panic。
+func TestServerToolCallWithoutTransport(t *testing.T) {
+	s := NewServer(nil, false)
+	RegisterAllTools(s)
+
+	var outBuf bytes.Buffer
+	s.writer = &outBuf
+
+	paramsJSON, _ := json.Marshal(map[string]any{
+		"name":      "bp_navigate",
+		"arguments": json.RawMessage(`{"url":"https://example.com"}`),
+	})
+
+	req := jsonRPCRequest{
+		JSONRPC: "2.0",
+		ID:      10,
+		Method:  "tools/call",
+		Params:  paramsJSON,
+	}
+	s.handleRequest(context.Background(), &req)
+
+	var resp jsonRPCResponse
+	if err := json.Unmarshal(outBuf.Bytes(), &resp); err != nil {
+		t.Fatalf("回應解析失敗: %v", err)
+	}
+
+	// 應回傳 tool error（isError: true），而非 JSON-RPC error
+	result, ok := resp.Result.(map[string]any)
+	if !ok {
+		t.Fatal("result 應為 map")
+	}
+	isError, _ := result["isError"].(bool)
+	if !isError {
+		t.Error("transport 未連線時 tool call 應回傳 isError: true")
+	}
+}
+
 // TestServerToolsCallUnknownTool 測試呼叫未知 tool 時的錯誤處理。
 func TestServerToolsCallUnknownTool(t *testing.T) {
 	s := NewServer(nil, false)

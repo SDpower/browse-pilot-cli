@@ -29,14 +29,14 @@ bash scripts/build-extensions.sh
 # 輸出至 dist/firefox/ dist/chrome/ dist/edge/
 ```
 
-建置成功後，將 `bp` 移至 PATH 內的目錄：
+建置成功後，將 `bp_cli` 移至 PATH 內的目錄：
 
 ```bash
 # macOS / Linux
-sudo mv bp /usr/local/bin/bp
+sudo mv bp /usr/local/bin/bp_cli
 
 # 驗證
-bp --version
+bp_cli --version
 ```
 
 ---
@@ -73,13 +73,13 @@ bp --version
 Chrome 與 Edge 透過 Native Messaging 與 CLI 通訊，需要安裝 NM Host 清單：
 
 ```bash
-bp setup firefox   # 安裝 Firefox NM Host
-bp setup chrome    # 安裝 Chrome NM Host
-bp setup edge      # 安裝 Edge NM Host
+bp_cli setup firefox   # 安裝 Firefox NM Host
+bp_cli setup chrome    # 安裝 Chrome NM Host
+bp_cli setup edge      # 安裝 Edge NM Host
 ```
 
-`bp setup` 會自動：
-1. 將 `bp` binary 的絕對路徑寫入 NM Host 清單（JSON）
+`bp_cli setup` 會自動：
+1. 將 `bp_cli` binary 的絕對路徑寫入 NM Host 清單（JSON）
 2. 將清單複製至各平台標準目錄
 
 ### 各平台 NM Host 路徑
@@ -113,10 +113,10 @@ bp setup edge      # 安裝 Edge NM Host
 ## 驗證安裝
 
 ```bash
-bp doctor
+bp_cli doctor
 ```
 
-`bp doctor` 會回報：
+`bp_cli doctor` 會回報：
 
 - 偵測到的瀏覽器類型
 - Extension 連線狀態（WebSocket / Native Messaging）
@@ -133,4 +133,4 @@ Extension：已連線
 狀態：正常
 ```
 
-若有任何錯誤，`bp doctor` 會輸出具體的修復建議。
+若有任何錯誤，`bp_cli doctor` 會輸出具體的修復建議。

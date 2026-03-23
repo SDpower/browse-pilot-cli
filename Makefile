@@ -1,6 +1,6 @@
 .PHONY: build test lint clean extension-build extension-lint
 
-BINARY = bp
+BINARY = bp_cli
 DIST_DIR = dist
 
 build:

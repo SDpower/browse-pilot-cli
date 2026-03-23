@@ -51,7 +51,7 @@ var doctorCmd = &cobra.Command{
 			} else {
 				nmPath := transport.NMHostPath(name)
 				fmt.Fprintf(os.Stdout, "  %s Native Messaging host 未安裝\n", red("✗"))
-				fmt.Fprintf(os.Stdout, "    執行 `bp setup %s` 安裝\n", name)
+				fmt.Fprintf(os.Stdout, "    執行 `bp_cli setup %s` 安裝\n", name)
 				fmt.Fprintf(os.Stdout, "    路徑: %s\n", nmPath)
 			}
 			fmt.Fprintln(os.Stdout)

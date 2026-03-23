@@ -33,11 +33,11 @@ var (
 	flagSession string
 )
 
-// rootCmd 是 bp 指令的根節點
+// rootCmd 是 bp_cli 指令的根節點
 var rootCmd = &cobra.Command{
-	Use:   "bp",
+	Use:   "bp_cli",
 	Short: "跨瀏覽器自動化 CLI 工具",
-	Long: `bp 是一個跨瀏覽器自動化 CLI 工具，
+	Long: `bp_cli 是一個跨瀏覽器自動化 CLI 工具，
 透過 WebExtension API 控制 Firefox/Chrome/Edge，
 支援 WebSocket 及 Native Messaging 雙通道通訊。`,
 	// 根指令依 flag 選擇啟動模式，否則顯示說明

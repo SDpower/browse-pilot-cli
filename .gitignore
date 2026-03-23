@@ -2,8 +2,8 @@
 .claude/
 
 # Binary
-/bp
-/bp.exe
+/bp_cli
+/bp_cli.exe
 /dist/
 
 # Go

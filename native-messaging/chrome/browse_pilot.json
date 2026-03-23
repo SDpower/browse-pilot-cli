@@ -1,7 +1,7 @@
 {
   "name": "com.browse_pilot.host",
   "description": "Browse Pilot CLI native messaging host",
-  "path": "/usr/local/bin/bp",
+  "path": "/usr/local/bin/bp_cli",
   "type": "stdio",
   "allowed_origins": ["chrome-extension://CHROME_EXTENSION_ID/"]
 }

@@ -70,12 +70,12 @@ bash scripts/build-extensions.sh
 Chrome and Edge communicate via Native Messaging, which requires host manifest installation:
 
 ```bash
-bp setup firefox
-bp setup chrome
-bp setup edge
+bp_cli setup firefox
+bp_cli setup chrome
+bp_cli setup edge
 
 # Or set up all browsers at once
-bp setup --all
+bp_cli setup --all
 ```
 
 ## Quick Start
@@ -83,60 +83,60 @@ bp setup --all
 ### Check Environment
 
 ```bash
-bp doctor
+bp_cli doctor
 ```
 
 ### Basic Operations
 
 ```bash
 # Open a webpage
-bp open https://example.com
+bp_cli open https://example.com
 
 # Get page state (list all interactive elements)
-bp state
+bp_cli state
 
 # Click an element (by index)
-bp click 0
+bp_cli click 0
 
 # Type text into a specific field
-bp input 1 "hello world"
+bp_cli input 1 "hello world"
 
 # Take a screenshot
-bp screenshot output.png
+bp_cli screenshot output.png
 ```
 
 ### Wait & Extract
 
 ```bash
 # Wait for an element
-bp wait selector "table.result"
+bp_cli wait selector "table.result"
 
 # Wait for text to appear
-bp wait text "Loading complete"
+bp_cli wait text "Loading complete"
 
 # Execute JavaScript
-bp eval "document.querySelectorAll('tr').length"
+bp_cli eval "document.querySelectorAll('tr').length"
 
 # Get page information
-bp get title
-bp get html --selector "table"
-bp get text 2
+bp_cli get title
+bp_cli get html --selector "table"
+bp_cli get text 2
 ```
 
 ### Python Automation
 
 ```bash
 # Execute Python code (with access to browser object)
-bp python "result = browser.state(); print(len(result['elements']))"
+bp_cli python "result = browser.state(); print(len(result['elements']))"
 
 # Execute a Python script
-bp python --file script.py
+bp_cli python --file script.py
 
 # List session variables
-bp python --vars
+bp_cli python --vars
 
 # Reset session
-bp python --reset
+bp_cli python --reset
 ```
 
 ## Command Reference
@@ -158,58 +158,58 @@ bp python --reset
 
 | Command | Description |
 |---------|-------------|
-| `bp open <url>` | Navigate to URL |
-| `bp back` | Go back |
-| `bp forward` | Go forward |
-| `bp reload` | Reload page |
-| `bp scroll <up\|down>` | Scroll page (optional `--amount <px>`) |
+| `bp_cli open <url>` | Navigate to URL |
+| `bp_cli back` | Go back |
+| `bp_cli forward` | Go forward |
+| `bp_cli reload` | Reload page |
+| `bp_cli scroll <up\|down>` | Scroll page (optional `--amount <px>`) |
 
 ### Page Inspection
 
 | Command | Description |
 |---------|-------------|
-| `bp state` | List current URL, title, and all interactive elements |
-| `bp screenshot [path]` | Take screenshot (outputs base64 if no path; `--full` for full page) |
+| `bp_cli state` | List current URL, title, and all interactive elements |
+| `bp_cli screenshot [path]` | Take screenshot (outputs base64 if no path; `--full` for full page) |
 
 ### Interaction
 
 | Command | Description |
 |---------|-------------|
-| `bp click <index>` | Click element (also `bp click <x> <y>` for coordinate click) |
-| `bp dblclick <index>` | Double-click element |
-| `bp rightclick <index>` | Right-click element |
-| `bp hover <index>` | Hover over element |
-| `bp type <text>` | Type text (focused element) |
-| `bp input <index> <text>` | Click element and type text |
-| `bp keys <keys>` | Send keyboard events (e.g., `Enter`, `Ctrl+a`) |
-| `bp select <index> <value>` | Select dropdown option |
-| `bp upload <index> <path>` | Upload file to file input |
+| `bp_cli click <index>` | Click element (also `bp_cli click <x> <y>` for coordinate click) |
+| `bp_cli dblclick <index>` | Double-click element |
+| `bp_cli rightclick <index>` | Right-click element |
+| `bp_cli hover <index>` | Hover over element |
+| `bp_cli type <text>` | Type text (focused element) |
+| `bp_cli input <index> <text>` | Click element and type text |
+| `bp_cli keys <keys>` | Send keyboard events (e.g., `Enter`, `Ctrl+a`) |
+| `bp_cli select <index> <value>` | Select dropdown option |
+| `bp_cli upload <index> <path>` | Upload file to file input |
 
 ### Tab Management
 
 | Command | Description |
 |---------|-------------|
-| `bp tabs` | List all tabs |
-| `bp tab <index>` | Switch to tab |
-| `bp close-tab [index]` | Close tab (defaults to current) |
+| `bp_cli tabs` | List all tabs |
+| `bp_cli tab <index>` | Switch to tab |
+| `bp_cli close-tab [index]` | Close tab (defaults to current) |
 
 ### Cookies
 
 | Command | Description |
 |---------|-------------|
-| `bp cookies get [--url <url>]` | Get cookies |
-| `bp cookies set <name> <value>` | Set cookie (`--domain`, `--secure`, `--same-site`) |
-| `bp cookies clear [--url <url>]` | Clear cookies |
-| `bp cookies export <file>` | Export cookies to JSON file |
-| `bp cookies import <file>` | Import cookies from JSON file |
+| `bp_cli cookies get [--url <url>]` | Get cookies |
+| `bp_cli cookies set <name> <value>` | Set cookie (`--domain`, `--secure`, `--same-site`) |
+| `bp_cli cookies clear [--url <url>]` | Clear cookies |
+| `bp_cli cookies export <file>` | Export cookies to JSON file |
+| `bp_cli cookies import <file>` | Import cookies from JSON file |
 
 ### Wait
 
 | Command | Description |
 |---------|-------------|
-| `bp wait selector <css>` | Wait for element (`--hidden` to wait for removal) |
-| `bp wait text <text>` | Wait for text to appear |
-| `bp wait url <pattern>` | Wait for URL to match pattern |
+| `bp_cli wait selector <css>` | Wait for element (`--hidden` to wait for removal) |
+| `bp_cli wait text <text>` | Wait for text to appear |
+| `bp_cli wait url <pattern>` | Wait for URL to match pattern |
 
 All wait commands support `--timeout <ms>` (default 30000).
 
@@ -217,36 +217,36 @@ All wait commands support `--timeout <ms>` (default 30000).
 
 | Command | Description |
 |---------|-------------|
-| `bp get title` | Get page title |
-| `bp get html [--selector <css>]` | Get HTML content |
-| `bp get text <index>` | Get element text |
-| `bp get value <index>` | Get form field value |
-| `bp get attributes <index>` | Get all element attributes |
-| `bp get bbox <index>` | Get element bounding box |
+| `bp_cli get title` | Get page title |
+| `bp_cli get html [--selector <css>]` | Get HTML content |
+| `bp_cli get text <index>` | Get element text |
+| `bp_cli get value <index>` | Get form field value |
+| `bp_cli get attributes <index>` | Get all element attributes |
+| `bp_cli get bbox <index>` | Get element bounding box |
 
 ### Execution
 
 | Command | Description |
 |---------|-------------|
-| `bp eval <code>` | Execute JavaScript in page context |
-| `bp python <code>` | Execute Python (with `browser` object access) |
-| `bp python --file <path>` | Execute Python script |
-| `bp python --vars` | List session variables |
-| `bp python --reset` | Reset Python session |
+| `bp_cli eval <code>` | Execute JavaScript in page context |
+| `bp_cli python <code>` | Execute Python (with `browser` object access) |
+| `bp_cli python --file <path>` | Execute Python script |
+| `bp_cli python --vars` | List session variables |
+| `bp_cli python --reset` | Reset Python session |
 
 ### System
 
 | Command | Description |
 |---------|-------------|
-| `bp doctor` | Check browser and connection status |
-| `bp status` | Show current connection info |
-| `bp sessions` | List active sessions |
-| `bp close [--all]` | Close connection |
-| `bp setup <browser>` | Install Native Messaging Host (`--all` for all browsers) |
+| `bp_cli doctor` | Check browser and connection status |
+| `bp_cli status` | Show current connection info |
+| `bp_cli sessions` | List active sessions |
+| `bp_cli close [--all]` | Close connection |
+| `bp_cli setup <browser>` | Install Native Messaging Host (`--all` for all browsers) |
 
 ## MCP Integration (Claude Code)
 
-`bp` supports the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) for direct integration with Claude Code and other AI agents.
+`bp_cli` supports the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) for direct integration with Claude Code and other AI agents.
 
 ### Configuration
 
@@ -256,7 +256,7 @@ Add to `.claude/mcp.json` or `claude_desktop_config.json`:
 {
   "mcpServers": {
     "browse-pilot": {
-      "command": "bp",
+      "command": "bp_cli",
       "args": ["--mcp"],
       "env": {
         "BP_BROWSER": "firefox",

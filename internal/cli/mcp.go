@@ -47,14 +47,16 @@ func runMCPServer() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// 啟動 transport（背景）
-	// MCP 模式下 transport 連線失敗不應阻止 server 啟動，
-	// server 仍然啟動並等待 Extension 連入
-	if err := tr.Start(ctx); err != nil {
+	// MCP 模式下，transport Start 不應阻塞等待 Extension 連入。
+	// 先啟動 WS server，讓 MCP server 回應 initialize，
+	// Extension 隨後連入，tool call 時 Send() 會自動等待連線。
+	startCtx, startCancel := context.WithTimeout(ctx, 500*time.Millisecond)
+	if err := tr.Start(startCtx); err != nil {
 		if flagVerbose {
-			fmt.Fprintf(os.Stderr, "[MCP] Transport 啟動提示: %v（等待 Extension 連線）\n", err)
+			fmt.Fprintf(os.Stderr, "[MCP] WS server 已啟動，等待 Extension 連入\n")
 		}
 	}
+	startCancel()
 	defer tr.Close()
 
 	if flagVerbose {
