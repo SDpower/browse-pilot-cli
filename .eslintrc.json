@@ -1,0 +1,85 @@
+{
+  "env": {
+    "browser": true,
+    "es2020": true,
+    "webextensions": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "script"
+  },
+  "rules": {
+    "no-var": "error",
+    "prefer-const": "warn",
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "no-undef": "error",
+    "semi": ["error", "always"],
+    "eqeqeq": "error",
+    "no-console": "off"
+  },
+  "globals": {
+    "browser": "readonly",
+    "chrome": "readonly",
+    "buildState": "readonly",
+    "getElementByIndex": "readonly",
+    "isVisible": "readonly",
+    "clickElement": "readonly",
+    "clickCoordinates": "readonly",
+    "typeText": "readonly",
+    "inputText": "readonly",
+    "sendKeys": "readonly",
+    "selectOption": "readonly",
+    "hoverElement": "readonly",
+    "dblclickElement": "readonly",
+    "rightclickElement": "readonly",
+    "uploadFile": "readonly",
+    "waitForSelector": "readonly",
+    "waitForText": "readonly",
+    "waitForUrl": "readonly",
+    "getTitle": "readonly",
+    "getHtml": "readonly",
+    "getText": "readonly",
+    "getValue": "readonly",
+    "getAttributes": "readonly",
+    "getBbox": "readonly",
+    "evalJs": "readonly",
+    "scrollPage": "readonly",
+    "ErrorCodes": "readonly",
+    "Router": "readonly",
+    "NavigationHandler": "readonly",
+    "TabsHandler": "readonly",
+    "CookiesHandler": "readonly",
+    "ScreenshotHandler": "readonly",
+    "SessionHandler": "readonly"
+  },
+  "overrides": [
+    {
+      "files": [
+        "extension/shared/content/state.js",
+        "extension/shared/content/interact.js",
+        "extension/shared/content/wait.js",
+        "extension/shared/content/get.js",
+        "extension/shared/content/eval.js",
+        "extension/shared/content/scroll.js"
+      ],
+      "rules": {
+        "no-unused-vars": "off"
+      }
+    },
+    {
+      "files": [
+        "extension/shared/utils/error.js",
+        "extension/shared/utils/timeout.js",
+        "extension/shared/utils/router.js",
+        "extension/shared/handlers/navigation.js",
+        "extension/shared/handlers/tabs.js",
+        "extension/shared/handlers/cookies.js",
+        "extension/shared/handlers/screenshot.js",
+        "extension/shared/handlers/session.js"
+      ],
+      "rules": {
+        "no-unused-vars": "off"
+      }
+    }
+  ]
+}

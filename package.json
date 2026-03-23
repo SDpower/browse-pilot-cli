@@ -1,0 +1,12 @@
+{
+  "name": "browse-pilot-cli",
+  "version": "0.1.0",
+  "description": "跨瀏覽器自動化 CLI — WebExtension 部分",
+  "private": true,
+  "scripts": {
+    "lint": "eslint extension/"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1"
+  }
+}

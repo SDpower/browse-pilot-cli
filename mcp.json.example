@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "browse-pilot": {
+      "command": "bp",
+      "args": ["--mcp"],
+      "env": {
+        "BP_BROWSER": "firefox",
+        "BP_PORT": "9222"
+      }
+    }
+  }
+}
