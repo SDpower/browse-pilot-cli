@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+
+	"github.com/SDpower/browse-pilot-cli/internal/i18n"
 )
 
 // StateElement 代表 get_state 回傳的單一可互動元素
@@ -46,7 +48,7 @@ func PrintState(w io.Writer, state *StateResult, jsonMode bool) error {
 	fmt.Fprintln(w)
 
 	if len(state.Elements) == 0 {
-		fmt.Fprintln(w, "（無可互動元素）")
+		fmt.Fprintln(w, i18n.T("inspection.state.no_elements"))
 		return nil
 	}
 
@@ -56,7 +58,7 @@ func PrintState(w io.Writer, state *StateResult, jsonMode bool) error {
 		fmt.Fprintln(w, line)
 	}
 
-	fmt.Fprintf(w, "\n共 %d 個可互動元素\n", len(state.Elements))
+	fmt.Fprintf(w, i18n.T("inspection.state.element_count"), len(state.Elements))
 	return nil
 }
 

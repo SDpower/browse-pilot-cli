@@ -6,13 +6,13 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/SDpower/browse-pilot-cli/internal/i18n"
 	"github.com/SDpower/browse-pilot-cli/internal/output"
 )
 
 // stateCmd 列出頁面 URL、標題與可互動元素（帶索引）
 var stateCmd = &cobra.Command{
-	Use:   "state",
-	Short: "列出頁面 URL、標題、可互動元素（帶索引）",
+	Use: "state",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tr, err := getTransport()
 		if err != nil {
@@ -42,9 +42,8 @@ var stateCmd = &cobra.Command{
 
 // screenshotCmd 截取目前頁面畫面
 var screenshotCmd = &cobra.Command{
-	Use:   "screenshot [path]",
-	Short: "截圖",
-	Args:  cobra.MaximumNArgs(1),
+	Use:  "screenshot [path]",
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		full, _ := cmd.Flags().GetBool("full")
 
@@ -86,8 +85,12 @@ var screenshotCmd = &cobra.Command{
 }
 
 func init() {
+	// 設定各指令的 Short 描述
+	stateCmd.Short = i18n.T("inspection.state.short")
+	screenshotCmd.Short = i18n.T("inspection.screenshot.short")
+
 	// 全頁截圖 flag
-	screenshotCmd.Flags().Bool("full", false, "全頁截圖")
+	screenshotCmd.Flags().Bool("full", false, i18n.T("inspection.screenshot.full"))
 
 	rootCmd.AddCommand(stateCmd)
 	rootCmd.AddCommand(screenshotCmd)

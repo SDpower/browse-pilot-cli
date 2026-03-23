@@ -13,6 +13,7 @@
 - 🤖 原生 MCP 支援 — 直接對接 Claude Code
 - 🐍 Python session — 透過 `browser` 物件編寫自動化腳本
 - ⚡ 單一 Go binary — 同時提供 CLI、WebSocket server、Native Messaging host、MCP server
+- 🌍 12 種語言 — 自動偵測系統語系（macOS AppleLocale / LANG）
 
 > 📖 **English version**: [README.md](README.md)
 
@@ -332,6 +333,36 @@ make extension-build
 
 # Extension lint
 make extension-lint
+```
+
+## 國際化（i18n）
+
+CLI 訊息會自動根據系統語系切換。支援語言：
+
+| 代碼 | 語言 |
+|------|------|
+| en | English（預設） |
+| de | Deutsch |
+| es | Español |
+| fr | Français |
+| hi | हिन्दी |
+| id | Bahasa Indonesia |
+| it | Italiano |
+| ja | 日本語 |
+| ko | 한국어 |
+| pt-BR | Português (Brasil) |
+| zh-Hans | 简体中文 |
+| zh-Hant | 繁體中文 |
+
+偵測優先順序：
+- **macOS**：`AppleLocale` → `LANG` → 預設 `en`
+- **Linux/Windows**：`LANG` / `LC_MESSAGES` → 預設 `en`
+
+可透過 `LANG` 環境變數覆蓋：
+
+```bash
+LANG=ja_JP.UTF-8 bp_cli --help    # 日文
+LANG=en_US.UTF-8 bp_cli doctor    # 英文
 ```
 
 ## 文件

@@ -6,12 +6,13 @@ import (
 	"strconv"
 
 	"github.com/spf13/cobra"
+
+	"github.com/SDpower/browse-pilot-cli/internal/i18n"
 )
 
 // getCmd 是取得頁面或元素資訊的父指令
 var getCmd = &cobra.Command{
-	Use:   "get",
-	Short: "取得頁面或元素資訊",
+	Use: "get",
 	// 未提供子指令時顯示說明
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
@@ -20,8 +21,7 @@ var getCmd = &cobra.Command{
 
 // getTitleCmd 取得當前頁面的標題
 var getTitleCmd = &cobra.Command{
-	Use:   "title",
-	Short: "取得頁面標題",
+	Use: "title",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tr, err := getTransport()
 		if err != nil {
@@ -65,8 +65,7 @@ var getTitleCmd = &cobra.Command{
 
 // getHtmlCmd 取得頁面或指定元素的 HTML 內容
 var getHtmlCmd = &cobra.Command{
-	Use:   "html",
-	Short: "取得頁面/元素 HTML",
+	Use: "html",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		selector, _ := cmd.Flags().GetString("selector")
 
@@ -112,13 +111,12 @@ var getHtmlCmd = &cobra.Command{
 
 // getTextCmd 取得指定索引元素的文字內容
 var getTextCmd = &cobra.Command{
-	Use:   "text <index>",
-	Short: "取得元素文字內容",
-	Args:  cobra.ExactArgs(1),
+	Use:  "text <index>",
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		index, err := strconv.Atoi(args[0])
 		if err != nil {
-			return fmt.Errorf("元素索引必須為整數，收到: %s", args[0])
+			return fmt.Errorf(i18n.T("error.invalid_element_index"), args[0])
 		}
 
 		tr, err := getTransport()
@@ -156,13 +154,12 @@ var getTextCmd = &cobra.Command{
 
 // getValueCmd 取得指定索引 input/textarea 元素的當前值
 var getValueCmd = &cobra.Command{
-	Use:   "value <index>",
-	Short: "取得 input/textarea 值",
-	Args:  cobra.ExactArgs(1),
+	Use:  "value <index>",
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		index, err := strconv.Atoi(args[0])
 		if err != nil {
-			return fmt.Errorf("元素索引必須為整數，收到: %s", args[0])
+			return fmt.Errorf(i18n.T("error.invalid_element_index"), args[0])
 		}
 
 		tr, err := getTransport()
@@ -200,13 +197,12 @@ var getValueCmd = &cobra.Command{
 
 // getAttributesCmd 取得指定索引元素的所有 HTML 屬性
 var getAttributesCmd = &cobra.Command{
-	Use:   "attributes <index>",
-	Short: "取得元素所有屬性",
-	Args:  cobra.ExactArgs(1),
+	Use:  "attributes <index>",
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		index, err := strconv.Atoi(args[0])
 		if err != nil {
-			return fmt.Errorf("元素索引必須為整數，收到: %s", args[0])
+			return fmt.Errorf(i18n.T("error.invalid_element_index"), args[0])
 		}
 
 		tr, err := getTransport()
@@ -247,13 +243,12 @@ var getAttributesCmd = &cobra.Command{
 
 // getBboxCmd 取得指定索引元素的 bounding box 座標
 var getBboxCmd = &cobra.Command{
-	Use:   "bbox <index>",
-	Short: "取得元素 bounding box",
-	Args:  cobra.ExactArgs(1),
+	Use:  "bbox <index>",
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		index, err := strconv.Atoi(args[0])
 		if err != nil {
-			return fmt.Errorf("元素索引必須為整數，收到: %s", args[0])
+			return fmt.Errorf(i18n.T("error.invalid_element_index"), args[0])
 		}
 
 		tr, err := getTransport()
@@ -295,8 +290,17 @@ var getBboxCmd = &cobra.Command{
 }
 
 func init() {
+	// 設定各指令的 Short 描述
+	getCmd.Short = i18n.T("get.short")
+	getTitleCmd.Short = i18n.T("get.title.short")
+	getHtmlCmd.Short = i18n.T("get.html.short")
+	getTextCmd.Short = i18n.T("get.text.short")
+	getValueCmd.Short = i18n.T("get.value.short")
+	getAttributesCmd.Short = i18n.T("get.attributes.short")
+	getBboxCmd.Short = i18n.T("get.bbox.short")
+
 	// getHtmlCmd 的 --selector flag
-	getHtmlCmd.Flags().String("selector", "", "CSS 選擇器（留空則取全頁 HTML）")
+	getHtmlCmd.Flags().String("selector", "", i18n.T("get.html.selector_flag"))
 
 	// 組裝子指令
 	getCmd.AddCommand(getTitleCmd)

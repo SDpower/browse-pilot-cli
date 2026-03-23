@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/SDpower/browse-pilot-cli/internal/i18n"
 	"github.com/SDpower/browse-pilot-cli/internal/output"
 	"github.com/SDpower/browse-pilot-cli/internal/transport"
 )
@@ -35,11 +36,7 @@ var (
 
 // rootCmd 是 bp_cli 指令的根節點
 var rootCmd = &cobra.Command{
-	Use:   "bp_cli",
-	Short: "跨瀏覽器自動化 CLI 工具",
-	Long: `bp_cli 是一個跨瀏覽器自動化 CLI 工具，
-透過 WebExtension API 控制 Firefox/Chrome/Edge，
-支援 WebSocket 及 Native Messaging 雙通道通訊。`,
+	Use: "bp_cli",
 	// 根指令依 flag 選擇啟動模式，否則顯示說明
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if flagNativeMessaging {
@@ -61,12 +58,16 @@ func Execute() {
 }
 
 func init() {
+	// 設定 rootCmd 的 Short 與 Long 描述
+	rootCmd.Short = i18n.T("root.short")
+	rootCmd.Long = i18n.T("root.long")
+
 	// 瀏覽器選擇 flag
 	rootCmd.PersistentFlags().StringVar(
 		&flagBrowser,
 		"browser",
 		"auto",
-		"目標瀏覽器（firefox/chrome/edge/auto）",
+		i18n.T("flag.browser"),
 	)
 
 	// WebSocket 埠號 flag
@@ -74,7 +75,7 @@ func init() {
 		&flagPort,
 		"port",
 		9222,
-		"WebSocket 伺服器埠號",
+		i18n.T("flag.port"),
 	)
 
 	// JSON 輸出 flag
@@ -82,7 +83,7 @@ func init() {
 		&flagJSON,
 		"json",
 		false,
-		"以 JSON 格式輸出結果",
+		i18n.T("flag.json"),
 	)
 
 	// 逾時時間 flag
@@ -90,7 +91,7 @@ func init() {
 		&flagTimeout,
 		"timeout",
 		30000,
-		"指令逾時時間（毫秒）",
+		i18n.T("flag.timeout"),
 	)
 
 	// 詳細日誌 flag
@@ -98,7 +99,7 @@ func init() {
 		&flagVerbose,
 		"verbose",
 		false,
-		"啟用詳細日誌輸出",
+		i18n.T("flag.verbose"),
 	)
 
 	// MCP server 模式 flag
@@ -106,7 +107,7 @@ func init() {
 		&flagMCP,
 		"mcp",
 		false,
-		"以 MCP server 模式啟動",
+		i18n.T("flag.mcp"),
 	)
 
 	// Native Messaging host 模式 flag
@@ -114,7 +115,7 @@ func init() {
 		&flagNativeMessaging,
 		"native-messaging",
 		false,
-		"以 Native Messaging host 模式啟動（供 Chrome/Edge Extension 呼叫）",
+		i18n.T("flag.native_messaging"),
 	)
 
 	// Session 名稱 flag
@@ -122,7 +123,7 @@ func init() {
 		&flagSession,
 		"session",
 		"default",
-		"連線 session 名稱",
+		i18n.T("flag.session"),
 	)
 }
 
@@ -185,7 +186,7 @@ func getTransport() (transport.Transport, error) {
 	case "chrome", "edge":
 		tr = transport.NewNMTransport(cfg)
 	default:
-		return nil, fmt.Errorf("不支援的瀏覽器: %s", browser)
+		return nil, fmt.Errorf(i18n.T("error.unsupported_browser"), browser)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout)

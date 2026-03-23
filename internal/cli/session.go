@@ -3,18 +3,19 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
+
+	"github.com/SDpower/browse-pilot-cli/internal/i18n"
 )
 
 // sessionsCmd 列出目前活躍的 Extension 連線 session
 var sessionsCmd = &cobra.Command{
-	Use:   "sessions",
-	Short: "列出活躍的連線 session",
+	Use: "sessions",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		f := getFormatter()
 
 		tr, err := getTransport()
 		if err != nil {
-			f.PrintError("無法建立連線: %v", err)
+			f.PrintError(i18n.T("error.build_connection"), err)
 			if flagJSON {
 				return f.PrintJSON(map[string]any{"connected": false, "error": err.Error()})
 			}
@@ -24,7 +25,7 @@ var sessionsCmd = &cobra.Command{
 
 		resp, err := sendCommand(tr, "get_status", nil)
 		if err != nil {
-			f.PrintError("查詢 session 失敗: %v", err)
+			f.PrintError(i18n.T("error.session_query"), err)
 			return nil
 		}
 
@@ -41,7 +42,7 @@ var sessionsCmd = &cobra.Command{
 			ExtensionID string `json:"extensionId"`
 		}
 		if err := resp.ParseResult(&status); err != nil {
-			f.PrintError("解析回應失敗: %v", err)
+			f.PrintError(i18n.T("error.parse_response"), err)
 			return nil
 		}
 
@@ -70,35 +71,38 @@ var sessionsCmd = &cobra.Command{
 
 // closeCmd 關閉當前或所有 session 連線
 var closeCmd = &cobra.Command{
-	Use:   "close",
-	Short: "關閉當前 session 連線",
+	Use: "close",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		all, _ := cmd.Flags().GetBool("all")
 		f := getFormatter()
 
 		tr, err := getTransport()
 		if err != nil {
-			f.PrintError("無法建立連線: %v", err)
+			f.PrintError(i18n.T("error.build_connection"), err)
 			return nil
 		}
 
 		if err := tr.Close(); err != nil {
-			f.PrintError("關閉連線時發生錯誤: %v", err)
+			f.PrintError(i18n.T("error.close_connection"), err)
 			return nil
 		}
 
 		if all {
-			f.PrintSuccess("已關閉所有 session 連線")
+			f.PrintSuccess("%s", i18n.T("session.close.all_success"))
 		} else {
-			f.PrintSuccess("已關閉連線")
+			f.PrintSuccess("%s", i18n.T("session.close.success"))
 		}
 		return nil
 	},
 }
 
 func init() {
+	// 設定各指令的 Short 描述
+	sessionsCmd.Short = i18n.T("session.sessions.short")
+	closeCmd.Short = i18n.T("session.close.short")
+
 	// 為 close 指令新增 --all flag
-	closeCmd.Flags().Bool("all", false, "關閉所有 session")
+	closeCmd.Flags().Bool("all", false, i18n.T("session.close.all_flag"))
 	rootCmd.AddCommand(sessionsCmd)
 	rootCmd.AddCommand(closeCmd)
 }

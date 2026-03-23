@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **i18n**: 12 languages support (en, de, es, fr, hi, id, it, ja, ko, pt-BR, zh-Hans, zh-Hant) with auto system locale detection (macOS AppleLocale / LANG)
+
 ## [0.1.0] - 2026-03-23
 
 ### Added

@@ -6,13 +6,14 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
+	"github.com/SDpower/browse-pilot-cli/internal/i18n"
 )
 
 // evalCmd 在當前頁面執行任意 JavaScript 程式碼並回傳結果
 var evalCmd = &cobra.Command{
-	Use:   "eval <code>",
-	Short: "在頁面執行 JavaScript",
-	Args:  cobra.ExactArgs(1),
+	Use:  "eval <code>",
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		params := map[string]any{
 			"code": args[0],
@@ -68,5 +69,7 @@ var evalCmd = &cobra.Command{
 }
 
 func init() {
+	// 設定 Short 描述
+	evalCmd.Short = i18n.T("eval.short")
 	rootCmd.AddCommand(evalCmd)
 }

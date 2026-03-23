@@ -3,6 +3,7 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,16 +11,14 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/SDpower/browse-pilot-cli/internal/i18n"
 	"github.com/SDpower/browse-pilot-cli/internal/output"
 	"github.com/SDpower/browse-pilot-cli/internal/transport"
 )
 
 // setupCmd 為指定瀏覽器安裝 Native Messaging host manifest
 var setupCmd = &cobra.Command{
-	Use:   "setup <browser>",
-	Short: "安裝 Native Messaging host manifest",
-	Long: `為指定瀏覽器安裝 Native Messaging host manifest。
-支援: firefox, chrome, edge, --all`,
+	Use:  "setup <browser>",
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		all, _ := cmd.Flags().GetBool("all")
@@ -33,30 +32,30 @@ var setupCmd = &cobra.Command{
 		case len(args) == 1:
 			b := args[0]
 			if b != "firefox" && b != "chrome" && b != "edge" {
-				return fmt.Errorf("不支援的瀏覽器: %s（支援 firefox/chrome/edge）", b)
+				return fmt.Errorf(i18n.T("error.unsupported_setup_browser"), b)
 			}
 			browsers = []string{b}
 		default:
-			return fmt.Errorf("請指定瀏覽器或使用 --all")
+			return errors.New(i18n.T("error.specify_browser_or_all"))
 		}
 
 		// 取得 bp_cli binary 的絕對路徑，寫入 manifest 中供瀏覽器呼叫
 		bpPath, err := os.Executable()
 		if err != nil {
-			return fmt.Errorf("無法取得 bp_cli 路徑: %w", err)
+			return fmt.Errorf(i18n.T("error.get_bp_path"), err)
 		}
 		bpPath, err = filepath.Abs(bpPath)
 		if err != nil {
-			return fmt.Errorf("無法取得絕對路徑: %w", err)
+			return fmt.Errorf(i18n.T("error.get_abs_path"), err)
 		}
 
 		// 逐一為各瀏覽器安裝 manifest
 		for _, browser := range browsers {
 			if err := installNMHost(browser, bpPath, f); err != nil {
-				f.PrintError("安裝 %s NM host 失敗: %v", browser, err)
+				f.PrintError(i18n.T("error.nm_install"), browser, err)
 				continue
 			}
-			f.PrintSuccess("已安裝 %s Native Messaging host", browser)
+			f.PrintSuccess(i18n.T("setup.success"), browser)
 		}
 
 		return nil
@@ -68,13 +67,13 @@ var setupCmd = &cobra.Command{
 func installNMHost(browser, bpPath string, f *output.Formatter) error {
 	nmPath := transport.NMHostPath(browser)
 	if nmPath == "" {
-		return fmt.Errorf("不支援的瀏覽器/平台組合: %s/%s", browser, runtime.GOOS)
+		return fmt.Errorf(i18n.T("error.unsupported_browser_platform"), browser, runtime.GOOS)
 	}
 
 	// 建立目錄（若尚未存在）
 	dir := filepath.Dir(nmPath)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return fmt.Errorf("建立目錄失敗: %w", err)
+		return fmt.Errorf(i18n.T("error.create_dir"), err)
 	}
 
 	// 產生 manifest 內容（符合 Native Messaging 規範）
@@ -97,19 +96,23 @@ func installNMHost(browser, bpPath string, f *output.Formatter) error {
 	// 序列化並寫入 JSON 檔
 	data, err := json.MarshalIndent(manifest, "", "  ")
 	if err != nil {
-		return fmt.Errorf("序列化 manifest 失敗: %w", err)
+		return fmt.Errorf(i18n.T("error.serialize_manifest"), err)
 	}
 
 	if err := os.WriteFile(nmPath, data, 0o644); err != nil { //nolint:gosec // manifest 檔案需要讓瀏覽器讀取，不需嚴格限制權限
-		return fmt.Errorf("寫入 manifest 失敗: %w", err)
+		return fmt.Errorf(i18n.T("error.write_manifest"), err)
 	}
 
-	f.PrintVerbose("已寫入: %s", nmPath)
+	f.PrintVerbose(i18n.T("setup.verbose_wrote"), nmPath)
 	return nil
 }
 
 func init() {
+	// 設定 Short 與 Long 描述
+	setupCmd.Short = i18n.T("setup.short")
+	setupCmd.Long = i18n.T("setup.long")
+
 	// 為 setup 指令新增 --all flag
-	setupCmd.Flags().Bool("all", false, "為所有瀏覽器安裝")
+	setupCmd.Flags().Bool("all", false, i18n.T("setup.all_flag"))
 	rootCmd.AddCommand(setupCmd)
 }

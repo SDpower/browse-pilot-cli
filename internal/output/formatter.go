@@ -7,6 +7,8 @@ import (
 	"os"
 
 	"github.com/fatih/color"
+
+	"github.com/SDpower/browse-pilot-cli/internal/i18n"
 )
 
 // Formatter 負責將結果以人類可讀或 JSON 格式輸出
@@ -39,7 +41,7 @@ func (f *Formatter) IsJSON() bool {
 func (f *Formatter) PrintJSON(v any) error {
 	data, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
-		return fmt.Errorf("JSON 序列化失敗: %w", err)
+		return fmt.Errorf(i18n.T("output.json_serialize_error"), err)
 	}
 	fmt.Fprintln(f.writer, string(data))
 	return nil

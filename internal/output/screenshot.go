@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/SDpower/browse-pilot-cli/internal/i18n"
 )
 
 // ScreenshotResult 代表截圖回傳結果
@@ -20,18 +22,18 @@ func SaveScreenshot(base64Data, path string) error {
 	// 解碼 base64
 	data, err := base64.StdEncoding.DecodeString(base64Data)
 	if err != nil {
-		return fmt.Errorf("base64 解碼失敗: %w", err)
+		return fmt.Errorf(i18n.T("output.screenshot_b64_error"), err)
 	}
 
 	// 確保目錄存在
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return fmt.Errorf("建立目錄失敗: %w", err)
+		return fmt.Errorf(i18n.T("output.screenshot_mkdir_error"), err)
 	}
 
 	// 寫入檔案
 	if err := os.WriteFile(path, data, 0o644); err != nil {
-		return fmt.Errorf("儲存截圖失敗: %w", err)
+		return fmt.Errorf(i18n.T("output.screenshot_save_error"), err)
 	}
 
 	return nil
@@ -52,7 +54,7 @@ func PrintScreenshot(w io.Writer, result *ScreenshotResult, path string, jsonMod
 				"path":    path,
 			})
 		}
-		fmt.Fprintf(w, "✓ 截圖已儲存至 %s\n", path)
+		fmt.Fprintf(w, "✓ "+i18n.T("inspection.screenshot.saved")+"\n", path)
 		return nil
 	}
 

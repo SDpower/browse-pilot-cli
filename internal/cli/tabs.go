@@ -6,12 +6,13 @@ import (
 	"strconv"
 
 	"github.com/spf13/cobra"
+
+	"github.com/SDpower/browse-pilot-cli/internal/i18n"
 )
 
 // tabsCmd 列出所有開啟的分頁
 var tabsCmd = &cobra.Command{
-	Use:   "tabs",
-	Short: "列出所有分頁",
+	Use: "tabs",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tr, err := getTransport()
 		if err != nil {
@@ -63,14 +64,13 @@ var tabsCmd = &cobra.Command{
 
 // tabCmd 切換至指定索引的分頁
 var tabCmd = &cobra.Command{
-	Use:   "tab <index>",
-	Short: "切換至指定分頁",
-	Args:  cobra.ExactArgs(1),
+	Use:  "tab <index>",
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// 將字串引數解析為整數索引
 		index, err := strconv.Atoi(args[0])
 		if err != nil {
-			return fmt.Errorf("分頁索引必須為整數，收到: %s", args[0])
+			return fmt.Errorf(i18n.T("error.invalid_tab_index"), args[0])
 		}
 
 		tr, err := getTransport()
@@ -93,23 +93,22 @@ var tabCmd = &cobra.Command{
 		if flagJSON {
 			return f.PrintJSON(resp.Result)
 		}
-		f.PrintSuccess("已切換至分頁 %d", index)
+		f.PrintSuccess(i18n.T("tabs.tab.success"), index)
 		return nil
 	},
 }
 
 // closeTabCmd 關閉指定索引的分頁，若未提供索引則關閉當前分頁
 var closeTabCmd = &cobra.Command{
-	Use:   "close-tab [index]",
-	Short: "關閉分頁（預設當前）",
-	Args:  cobra.MaximumNArgs(1),
+	Use:  "close-tab [index]",
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// 組建請求參數，索引為選填
 		params := map[string]any{}
 		if len(args) == 1 {
 			index, err := strconv.Atoi(args[0])
 			if err != nil {
-				return fmt.Errorf("分頁索引必須為整數，收到: %s", args[0])
+				return fmt.Errorf(i18n.T("error.invalid_tab_index"), args[0])
 			}
 			params["index"] = index
 		}
@@ -135,15 +134,20 @@ var closeTabCmd = &cobra.Command{
 			return f.PrintJSON(resp.Result)
 		}
 		if len(args) == 1 {
-			f.PrintSuccess("已關閉分頁 %s", args[0])
+			f.PrintSuccess(i18n.T("tabs.close_tab.success_index"), args[0])
 		} else {
-			f.PrintSuccess("已關閉當前分頁")
+			f.PrintSuccess("%s", i18n.T("tabs.close_tab.success_current"))
 		}
 		return nil
 	},
 }
 
 func init() {
+	// 設定各指令的 Short 描述
+	tabsCmd.Short = i18n.T("tabs.tabs.short")
+	tabCmd.Short = i18n.T("tabs.tab.short")
+	closeTabCmd.Short = i18n.T("tabs.close_tab.short")
+
 	rootCmd.AddCommand(tabsCmd)
 	rootCmd.AddCommand(tabCmd)
 	rootCmd.AddCommand(closeTabCmd)

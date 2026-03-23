@@ -5,13 +5,14 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
+	"github.com/SDpower/browse-pilot-cli/internal/i18n"
 )
 
 // openCmd 導航至指定 URL
 var openCmd = &cobra.Command{
-	Use:   "open <url>",
-	Short: "導航至指定 URL",
-	Args:  cobra.ExactArgs(1),
+	Use:  "open <url>",
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tr, err := getTransport()
 		if err != nil {
@@ -26,7 +27,7 @@ var openCmd = &cobra.Command{
 
 		f := getFormatter()
 		if resp.IsError() {
-			f.PrintError("導航失敗: %s", resp.Error.Message)
+			f.PrintError(i18n.T("nav.open.error"), resp.Error.Message)
 			return resp.Error
 		}
 
@@ -43,7 +44,7 @@ var openCmd = &cobra.Command{
 		if flagJSON {
 			return f.PrintJSON(result)
 		}
-		f.PrintSuccess("已開啟 %s", result.URL)
+		f.PrintSuccess(i18n.T("nav.open.success"), result.URL)
 		if result.Title != "" {
 			f.PrintKeyValue("Title", result.Title)
 		}
@@ -53,8 +54,7 @@ var openCmd = &cobra.Command{
 
 // backCmd 返回上一頁
 var backCmd = &cobra.Command{
-	Use:   "back",
-	Short: "上一頁",
+	Use: "back",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tr, err := getTransport()
 		if err != nil {
@@ -75,15 +75,14 @@ var backCmd = &cobra.Command{
 		if flagJSON {
 			return f.PrintJSON(resp.Result)
 		}
-		f.PrintSuccess("已返回上一頁")
+		f.PrintSuccess("%s", i18n.T("nav.back.success"))
 		return nil
 	},
 }
 
 // forwardCmd 前進至下一頁
 var forwardCmd = &cobra.Command{
-	Use:   "forward",
-	Short: "下一頁",
+	Use: "forward",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tr, err := getTransport()
 		if err != nil {
@@ -104,15 +103,14 @@ var forwardCmd = &cobra.Command{
 		if flagJSON {
 			return f.PrintJSON(resp.Result)
 		}
-		f.PrintSuccess("已前進至下一頁")
+		f.PrintSuccess("%s", i18n.T("nav.forward.success"))
 		return nil
 	},
 }
 
 // reloadCmd 重新載入當前頁面
 var reloadCmd = &cobra.Command{
-	Use:   "reload",
-	Short: "重新載入當前頁面",
+	Use: "reload",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		tr, err := getTransport()
 		if err != nil {
@@ -133,20 +131,19 @@ var reloadCmd = &cobra.Command{
 		if flagJSON {
 			return f.PrintJSON(resp.Result)
 		}
-		f.PrintSuccess("已重新載入")
+		f.PrintSuccess("%s", i18n.T("nav.reload.success"))
 		return nil
 	},
 }
 
 // scrollCmd 捲動頁面
 var scrollCmd = &cobra.Command{
-	Use:   "scroll <up|down>",
-	Short: "捲動頁面",
-	Args:  cobra.ExactArgs(1),
+	Use:  "scroll <up|down>",
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		direction := args[0]
 		if direction != "up" && direction != "down" {
-			return fmt.Errorf("方向只能是 up 或 down，收到: %s", direction)
+			return fmt.Errorf(i18n.T("nav.scroll.invalid_direction"), direction)
 		}
 
 		amount, _ := cmd.Flags().GetInt("amount")
@@ -175,14 +172,24 @@ var scrollCmd = &cobra.Command{
 			return f.PrintJSON(resp.Result)
 		}
 
-		// 依方向輸出對應的中文訊息
-		dirMap := map[string]string{"up": "向上", "down": "向下"}
-		f.PrintSuccess("已%s捲動", dirMap[direction])
+		// 依方向輸出對應訊息
+		if direction == "up" {
+			f.PrintSuccess("%s", i18n.T("nav.scroll.up.success"))
+		} else {
+			f.PrintSuccess("%s", i18n.T("nav.scroll.down.success"))
+		}
 		return nil
 	},
 }
 
 func init() {
+	// 設定各指令的 Short 描述
+	openCmd.Short = i18n.T("nav.open.short")
+	backCmd.Short = i18n.T("nav.back.short")
+	forwardCmd.Short = i18n.T("nav.forward.short")
+	reloadCmd.Short = i18n.T("nav.reload.short")
+	scrollCmd.Short = i18n.T("nav.scroll.short")
+
 	rootCmd.AddCommand(openCmd)
 	rootCmd.AddCommand(backCmd)
 	rootCmd.AddCommand(forwardCmd)
@@ -190,5 +197,5 @@ func init() {
 	rootCmd.AddCommand(scrollCmd)
 
 	// scrollCmd 的 --amount flag
-	scrollCmd.Flags().Int("amount", 0, "捲動像素數")
+	scrollCmd.Flags().Int("amount", 0, i18n.T("nav.scroll.amount"))
 }

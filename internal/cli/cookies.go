@@ -7,12 +7,13 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
+	"github.com/SDpower/browse-pilot-cli/internal/i18n"
 )
 
 // cookiesCmd 是 Cookie 管理的父指令
 var cookiesCmd = &cobra.Command{
-	Use:   "cookies",
-	Short: "Cookie 管理",
+	Use: "cookies",
 	// 未提供子指令時顯示說明
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
@@ -21,8 +22,7 @@ var cookiesCmd = &cobra.Command{
 
 // cookiesGetCmd 取得目前頁面的 cookies
 var cookiesGetCmd = &cobra.Command{
-	Use:   "get",
-	Short: "取得 cookies",
+	Use: "get",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		url, _ := cmd.Flags().GetString("url")
 
@@ -66,7 +66,7 @@ var cookiesGetCmd = &cobra.Command{
 		}
 
 		if len(result.Cookies) == 0 {
-			fmt.Println("（無 cookies）")
+			fmt.Println(i18n.T("cookies.none"))
 			return nil
 		}
 		for _, c := range result.Cookies {
@@ -78,9 +78,8 @@ var cookiesGetCmd = &cobra.Command{
 
 // cookiesSetCmd 設定一個 cookie
 var cookiesSetCmd = &cobra.Command{
-	Use:   "set <name> <value>",
-	Short: "設定 cookie",
-	Args:  cobra.ExactArgs(2),
+	Use:  "set <name> <value>",
+	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		domain, _ := cmd.Flags().GetString("domain")
 		secure, _ := cmd.Flags().GetBool("secure")
@@ -121,15 +120,14 @@ var cookiesSetCmd = &cobra.Command{
 		if flagJSON {
 			return f.PrintJSON(resp.Result)
 		}
-		f.PrintSuccess("已設定 cookie: %s", args[0])
+		f.PrintSuccess(i18n.T("cookies.set.success"), args[0])
 		return nil
 	},
 }
 
 // cookiesClearCmd 清除 cookies，可指定特定 URL
 var cookiesClearCmd = &cobra.Command{
-	Use:   "clear",
-	Short: "清除 cookies",
+	Use: "clear",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		url, _ := cmd.Flags().GetString("url")
 
@@ -160,9 +158,9 @@ var cookiesClearCmd = &cobra.Command{
 			return f.PrintJSON(resp.Result)
 		}
 		if url != "" {
-			f.PrintSuccess("已清除 %s 的 cookies", url)
+			f.PrintSuccess(i18n.T("cookies.clear.url_success"), url)
 		} else {
-			f.PrintSuccess("已清除所有 cookies")
+			f.PrintSuccess("%s", i18n.T("cookies.clear.all_success"))
 		}
 		return nil
 	},
@@ -170,9 +168,8 @@ var cookiesClearCmd = &cobra.Command{
 
 // cookiesExportCmd 將所有 cookies 匯出為 JSON 檔
 var cookiesExportCmd = &cobra.Command{
-	Use:   "export <file>",
-	Short: "匯出 cookies 至 JSON 檔",
-	Args:  cobra.ExactArgs(1),
+	Use:  "export <file>",
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		filePath := args[0]
 
@@ -204,40 +201,39 @@ var cookiesExportCmd = &cobra.Command{
 
 		var cookies []any
 		if unmarshalErr := json.Unmarshal(result.Cookies, &cookies); unmarshalErr != nil {
-			return fmt.Errorf("解析 cookies 失敗: %w", unmarshalErr)
+			return fmt.Errorf(i18n.T("error.parse_cookies"), unmarshalErr)
 		}
 
 		// 以 pretty-printed JSON 格式寫入檔案
 		data, err := json.MarshalIndent(cookies, "", "  ")
 		if err != nil {
-			return fmt.Errorf("序列化失敗: %w", err)
+			return fmt.Errorf(i18n.T("error.serialize"), err)
 		}
 		if err := os.WriteFile(filePath, data, 0o644); err != nil {
-			return fmt.Errorf("寫入檔案失敗: %w", err)
+			return fmt.Errorf(i18n.T("error.write_file"), err)
 		}
 
-		f.PrintSuccess("已匯出 %d 筆 cookies 至 %s", len(cookies), filePath)
+		f.PrintSuccess(i18n.T("cookies.export.success"), len(cookies), filePath)
 		return nil
 	},
 }
 
 // cookiesImportCmd 從 JSON 檔匯入 cookies
 var cookiesImportCmd = &cobra.Command{
-	Use:   "import <file>",
-	Short: "從 JSON 檔匯入 cookies",
-	Args:  cobra.ExactArgs(1),
+	Use:  "import <file>",
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		filePath := args[0]
 
 		// 讀取並解析 JSON 檔案
 		data, err := os.ReadFile(filePath)
 		if err != nil {
-			return fmt.Errorf("讀取檔案失敗: %w", err)
+			return fmt.Errorf(i18n.T("error.read_file"), err)
 		}
 
 		var cookies []map[string]any
 		if unmarshalErr := json.Unmarshal(data, &cookies); unmarshalErr != nil {
-			return fmt.Errorf("JSON 解析失敗: %w", unmarshalErr)
+			return fmt.Errorf(i18n.T("error.json_parse"), unmarshalErr)
 		}
 
 		tr, err := getTransport()
@@ -255,31 +251,39 @@ var cookiesImportCmd = &cobra.Command{
 			resp, err := sendCommand(tr, "set_cookie", cookie)
 			if err != nil || (resp != nil && resp.IsError()) {
 				failCount++
-				f.PrintVerbose("匯入失敗: %v", cookie["name"])
+				f.PrintVerbose(i18n.T("cookies.import.verbose_fail"), cookie["name"])
 				continue
 			}
 			successCount++
 		}
 
-		f.PrintSuccess("已匯入 %d 筆 cookies", successCount)
+		f.PrintSuccess(i18n.T("cookies.import.success"), successCount)
 		if failCount > 0 {
-			f.PrintWarning("%d 筆匯入失敗", failCount)
+			f.PrintWarning(i18n.T("cookies.import.fail_warning"), failCount)
 		}
 		return nil
 	},
 }
 
 func init() {
+	// 設定各指令的 Short 描述
+	cookiesCmd.Short = i18n.T("cookies.short")
+	cookiesGetCmd.Short = i18n.T("cookies.get.short")
+	cookiesSetCmd.Short = i18n.T("cookies.set.short")
+	cookiesClearCmd.Short = i18n.T("cookies.clear.short")
+	cookiesExportCmd.Short = i18n.T("cookies.export.short")
+	cookiesImportCmd.Short = i18n.T("cookies.import.short")
+
 	// cookiesGetCmd 的 flags
-	cookiesGetCmd.Flags().String("url", "", "篩選指定 URL 的 cookies")
+	cookiesGetCmd.Flags().String("url", "", i18n.T("cookies.get.url_flag"))
 
 	// cookiesSetCmd 的 flags
-	cookiesSetCmd.Flags().String("domain", "", "cookie 的 domain")
-	cookiesSetCmd.Flags().Bool("secure", false, "secure cookie")
-	cookiesSetCmd.Flags().String("same-site", "", "SameSite 屬性（Strict/Lax/None）")
+	cookiesSetCmd.Flags().String("domain", "", i18n.T("cookies.set.domain_flag"))
+	cookiesSetCmd.Flags().Bool("secure", false, i18n.T("cookies.set.secure_flag"))
+	cookiesSetCmd.Flags().String("same-site", "", i18n.T("cookies.set.same_site_flag"))
 
 	// cookiesClearCmd 的 flags
-	cookiesClearCmd.Flags().String("url", "", "清除指定 URL 的 cookies")
+	cookiesClearCmd.Flags().String("url", "", i18n.T("cookies.clear.url_flag"))
 
 	// 組裝子指令
 	cookiesCmd.AddCommand(cookiesGetCmd)

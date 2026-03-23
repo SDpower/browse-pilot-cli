@@ -4,20 +4,20 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/SDpower/browse-pilot-cli/internal/i18n"
 	"github.com/SDpower/browse-pilot-cli/internal/output"
 )
 
 // statusCmd 顯示當前 Extension 連線狀態與版本資訊
 var statusCmd = &cobra.Command{
-	Use:   "status",
-	Short: "顯示當前連線資訊",
+	Use: "status",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		f := output.NewFormatter(flagJSON, flagVerbose)
 
 		// 嘗試建立 transport 連線
 		tr, err := getTransport()
 		if err != nil {
-			f.PrintError("未連線: %v", err)
+			f.PrintError(i18n.T("error.no_connection"), err)
 			if flagJSON {
 				return f.PrintJSON(map[string]any{
 					"connected": false,
@@ -31,7 +31,7 @@ var statusCmd = &cobra.Command{
 		// 向 Extension 查詢狀態
 		resp, err := sendCommand(tr, "get_status", nil)
 		if err != nil {
-			f.PrintError("狀態查詢失敗: %v", err)
+			f.PrintError(i18n.T("error.status_query"), err)
 			return nil
 		}
 
@@ -48,7 +48,7 @@ var statusCmd = &cobra.Command{
 			ExtensionID string `json:"extensionId"`
 		}
 		if err := resp.ParseResult(&status); err != nil {
-			f.PrintError("解析回應失敗: %v", err)
+			f.PrintError(i18n.T("error.parse_response"), err)
 			return nil
 		}
 
@@ -56,7 +56,7 @@ var statusCmd = &cobra.Command{
 			return f.PrintJSON(status)
 		}
 
-		f.PrintSuccess("已連線")
+		f.PrintSuccess("%s", i18n.T("status.connected"))
 		f.PrintKeyValue("瀏覽器", status.Browser)
 		f.PrintKeyValue("版本", status.Version)
 		f.PrintKeyValue("Transport", tr.Type())
@@ -66,5 +66,7 @@ var statusCmd = &cobra.Command{
 }
 
 func init() {
+	// 設定 Short 描述
+	statusCmd.Short = i18n.T("status.short")
 	rootCmd.AddCommand(statusCmd)
 }

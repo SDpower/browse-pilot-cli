@@ -8,14 +8,14 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
+	"github.com/SDpower/browse-pilot-cli/internal/i18n"
 	"github.com/SDpower/browse-pilot-cli/internal/output"
 	"github.com/SDpower/browse-pilot-cli/internal/transport"
 )
 
 // doctorCmd 執行本機環境診斷，不需要建立 transport 連線
 var doctorCmd = &cobra.Command{
-	Use:   "doctor",
-	Short: "檢查瀏覽器、Extension、連線狀態",
+	Use: "doctor",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		f := output.NewFormatter(flagJSON, flagVerbose)
 
@@ -28,7 +28,7 @@ var doctorCmd = &cobra.Command{
 			})
 		}
 
-		fmt.Fprintln(os.Stdout, "=== Browse Pilot Doctor ===")
+		fmt.Fprintln(os.Stdout, i18n.T("doctor.header"))
 		fmt.Fprintln(os.Stdout)
 
 		green := color.New(color.FgGreen).SprintFunc()
@@ -40,25 +40,25 @@ var doctorCmd = &cobra.Command{
 
 			// 顯示瀏覽器執行狀態
 			if b.Running {
-				fmt.Fprintf(os.Stdout, "%s %s — 執行中\n", green("✓"), name)
+				fmt.Fprintf(os.Stdout, "%s %s\n", green("✓"), fmt.Sprintf(i18n.T("doctor.browser_running"), name))
 			} else {
-				fmt.Fprintf(os.Stdout, "%s %s — 未執行\n", yellow("○"), name)
+				fmt.Fprintf(os.Stdout, "%s %s\n", yellow("○"), fmt.Sprintf(i18n.T("doctor.browser_stopped"), name))
 			}
 
 			// 顯示 Native Messaging host 安裝狀態
 			if b.HasNMHost {
-				fmt.Fprintf(os.Stdout, "  %s Native Messaging host 已安裝\n", green("✓"))
+				fmt.Fprintf(os.Stdout, "  %s %s\n", green("✓"), i18n.T("doctor.nm_installed"))
 			} else {
 				nmPath := transport.NMHostPath(name)
-				fmt.Fprintf(os.Stdout, "  %s Native Messaging host 未安裝\n", red("✗"))
-				fmt.Fprintf(os.Stdout, "    執行 `bp_cli setup %s` 安裝\n", name)
-				fmt.Fprintf(os.Stdout, "    路徑: %s\n", nmPath)
+				fmt.Fprintf(os.Stdout, "  %s %s\n", red("✗"), i18n.T("doctor.nm_not_installed"))
+				fmt.Fprintf(os.Stdout, "    %s\n", fmt.Sprintf(i18n.T("doctor.nm_install_hint"), name))
+				fmt.Fprintf(os.Stdout, "    %s\n", fmt.Sprintf(i18n.T("doctor.nm_path"), nmPath))
 			}
 			fmt.Fprintln(os.Stdout)
 		}
 
 		if len(browsers) == 0 {
-			f.PrintError("未偵測到任何瀏覽器")
+			f.PrintError("%s", i18n.T("doctor.no_browser"))
 		}
 
 		return nil
@@ -66,5 +66,7 @@ var doctorCmd = &cobra.Command{
 }
 
 func init() {
+	// 設定 Short 描述
+	doctorCmd.Short = i18n.T("doctor.short")
 	rootCmd.AddCommand(doctorCmd)
 }

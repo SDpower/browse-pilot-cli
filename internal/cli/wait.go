@@ -3,12 +3,13 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
+
+	"github.com/SDpower/browse-pilot-cli/internal/i18n"
 )
 
 // waitCmd 是等待頁面條件的父指令
 var waitCmd = &cobra.Command{
-	Use:   "wait",
-	Short: "等待頁面條件",
+	Use: "wait",
 	// 未提供子指令時顯示說明
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
@@ -17,9 +18,8 @@ var waitCmd = &cobra.Command{
 
 // waitSelectorCmd 等待指定 CSS 選擇器的元素出現或消失
 var waitSelectorCmd = &cobra.Command{
-	Use:   "selector <css>",
-	Short: "等待元素出現",
-	Args:  cobra.ExactArgs(1),
+	Use:  "selector <css>",
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		hidden, _ := cmd.Flags().GetBool("hidden")
 		timeout, _ := cmd.Flags().GetInt("timeout")
@@ -57,9 +57,9 @@ var waitSelectorCmd = &cobra.Command{
 			return f.PrintJSON(resp.Result)
 		}
 		if hidden {
-			f.PrintSuccess("元素已消失: %s", args[0])
+			f.PrintSuccess(i18n.T("wait.selector.disappeared"), args[0])
 		} else {
-			f.PrintSuccess("元素已出現: %s", args[0])
+			f.PrintSuccess(i18n.T("wait.selector.appeared"), args[0])
 		}
 		return nil
 	},
@@ -67,9 +67,8 @@ var waitSelectorCmd = &cobra.Command{
 
 // waitTextCmd 等待頁面中出現指定文字
 var waitTextCmd = &cobra.Command{
-	Use:   "text <text>",
-	Short: "等待文字出現",
-	Args:  cobra.ExactArgs(1),
+	Use:  "text <text>",
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		timeout, _ := cmd.Flags().GetInt("timeout")
 
@@ -98,16 +97,15 @@ var waitTextCmd = &cobra.Command{
 		if flagJSON {
 			return f.PrintJSON(resp.Result)
 		}
-		f.PrintSuccess("文字已出現: %s", args[0])
+		f.PrintSuccess(i18n.T("wait.text.success"), args[0])
 		return nil
 	},
 }
 
 // waitUrlCmd 等待頁面 URL 符合指定的 pattern
 var waitUrlCmd = &cobra.Command{
-	Use:   "url <pattern>",
-	Short: "等待 URL 符合 pattern",
-	Args:  cobra.ExactArgs(1),
+	Use:  "url <pattern>",
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		timeout, _ := cmd.Flags().GetInt("timeout")
 
@@ -136,21 +134,27 @@ var waitUrlCmd = &cobra.Command{
 		if flagJSON {
 			return f.PrintJSON(resp.Result)
 		}
-		f.PrintSuccess("URL 已符合 pattern: %s", args[0])
+		f.PrintSuccess(i18n.T("wait.url.success"), args[0])
 		return nil
 	},
 }
 
 func init() {
+	// 設定各指令的 Short 描述
+	waitCmd.Short = i18n.T("wait.short")
+	waitSelectorCmd.Short = i18n.T("wait.selector.short")
+	waitTextCmd.Short = i18n.T("wait.text.short")
+	waitUrlCmd.Short = i18n.T("wait.url.short")
+
 	// waitSelectorCmd 的 flags
-	waitSelectorCmd.Flags().Bool("hidden", false, "等待元素消失")
-	waitSelectorCmd.Flags().Int("timeout", 30000, "逾時時間（ms）")
+	waitSelectorCmd.Flags().Bool("hidden", false, i18n.T("wait.selector.hidden_flag"))
+	waitSelectorCmd.Flags().Int("timeout", 30000, i18n.T("wait.timeout_flag"))
 
 	// waitTextCmd 的 flags
-	waitTextCmd.Flags().Int("timeout", 30000, "逾時時間（ms）")
+	waitTextCmd.Flags().Int("timeout", 30000, i18n.T("wait.timeout_flag"))
 
 	// waitUrlCmd 的 flags
-	waitUrlCmd.Flags().Int("timeout", 30000, "逾時時間（ms）")
+	waitUrlCmd.Flags().Int("timeout", 30000, i18n.T("wait.timeout_flag"))
 
 	// 組裝子指令
 	waitCmd.AddCommand(waitSelectorCmd)

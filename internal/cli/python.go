@@ -5,12 +5,14 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"time"
 
 	"github.com/spf13/cobra"
 
+	"github.com/SDpower/browse-pilot-cli/internal/i18n"
 	"github.com/SDpower/browse-pilot-cli/internal/python"
 )
 
@@ -20,16 +22,7 @@ var pythonSession *python.Session
 
 // pythonCmd 定義 `bp python` 子指令
 var pythonCmd = &cobra.Command{
-	Use:   "python [code]",
-	Short: "執行 Python 程式碼（可存取 browser 物件操作瀏覽器）",
-	Long: `在持久 Python session 中執行程式碼。
-Session 持續存在直到執行 --reset，變數可跨呼叫保留。
-
-範例：
-  bp python "browser.navigate('https://example.com')"
-  bp python --file script.py
-  bp python --vars
-  bp python --reset`,
+	Use:  "python [code]",
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fileFlag, _ := cmd.Flags().GetString("file")
@@ -44,7 +37,7 @@ Session 持續存在直到執行 --reset，變數可跨呼叫保留。
 				pythonSession.Close()
 				pythonSession = nil
 			}
-			f.PrintSuccess("Python session 已重置")
+			f.PrintSuccess("%s", i18n.T("python.reset.success"))
 			return nil
 		}
 
@@ -52,7 +45,7 @@ Session 持續存在直到執行 --reset，變數可跨呼叫保留。
 		if pythonSession == nil || !pythonSession.IsRunning() {
 			s, err := python.NewSession("")
 			if err != nil {
-				return fmt.Errorf("啟動 Python session 失敗: %w", err)
+				return fmt.Errorf(i18n.T("error.python_start"), err)
 			}
 			pythonSession = s
 
@@ -63,7 +56,7 @@ Session 持續存在直到執行 --reset，變數可跨呼叫保留。
 					Params map[string]any `json:"params"`
 				}
 				if err := json.Unmarshal([]byte(requestJSON), &req); err != nil {
-					return nil, fmt.Errorf("解碼 browser 呼叫請求失敗: %w", err)
+					return nil, fmt.Errorf(i18n.T("error.python_decode_request"), err)
 				}
 
 				tr, err := getTransport()
@@ -82,7 +75,7 @@ Session 持續存在直到執行 --reset，變數可跨呼叫保留。
 
 				var result any
 				if err := json.Unmarshal(resp.Result, &result); err != nil {
-					return nil, fmt.Errorf("解碼瀏覽器回應失敗: %w", err)
+					return nil, fmt.Errorf(i18n.T("error.python_decode_response"), err)
 				}
 				return result, nil
 			})
@@ -98,7 +91,7 @@ Session 持續存在直到執行 --reset，變數可跨呼叫保留。
 				return f.PrintJSON(vars)
 			}
 			if len(vars) == 0 {
-				f.PrintInfo("（無使用者變數）")
+				f.PrintInfo("%s", i18n.T("python.vars.none"))
 				return nil
 			}
 			for k, v := range vars {
@@ -112,13 +105,13 @@ Session 持續存在直到執行 --reset，變數可跨呼叫保留。
 		if fileFlag != "" {
 			data, err := os.ReadFile(fileFlag)
 			if err != nil {
-				return fmt.Errorf("讀取 Python 腳本檔失敗: %w", err)
+				return fmt.Errorf(i18n.T("error.python_read_script"), err)
 			}
 			code = string(data)
 		} else if len(args) > 0 {
 			code = args[0]
 		} else {
-			return fmt.Errorf("請提供 Python 程式碼或使用 --file <path>")
+			return errors.New(i18n.T("error.python_no_code"))
 		}
 
 		// 以 timeout 執行程式碼
@@ -130,7 +123,7 @@ Session 持續存在直到執行 --reset，變數可跨呼叫保留。
 
 		result, err := pythonSession.Execute(ctx, code)
 		if err != nil {
-			f.PrintError("Python 執行錯誤: %v", err)
+			f.PrintError(i18n.T("error.python_exec"), err)
 			return err
 		}
 
@@ -145,8 +138,12 @@ Session 持續存在直到執行 --reset，變數可跨呼叫保留。
 }
 
 func init() {
-	pythonCmd.Flags().String("file", "", "執行 Python 腳本檔（.py）")
-	pythonCmd.Flags().Bool("vars", false, "列出目前 session 中的使用者變數")
-	pythonCmd.Flags().Bool("reset", false, "重置 Python session（清除所有變數）")
+	// 設定 Short 與 Long 描述
+	pythonCmd.Short = i18n.T("python.short")
+	pythonCmd.Long = i18n.T("python.long")
+
+	pythonCmd.Flags().String("file", "", i18n.T("python.file_flag"))
+	pythonCmd.Flags().Bool("vars", false, i18n.T("python.vars_flag"))
+	pythonCmd.Flags().Bool("reset", false, i18n.T("python.reset_flag"))
 	rootCmd.AddCommand(pythonCmd)
 }
