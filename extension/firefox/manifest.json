@@ -1,0 +1,59 @@
+{
+  "manifest_version": 2,
+  "name": "Browse Pilot",
+  "version": "1.0.0",
+  "description": "跨瀏覽器自動化橋接器 — browse-pilot-cli",
+  "permissions": [
+    "<all_urls>",
+    "tabs",
+    "activeTab",
+    "cookies",
+    "webNavigation",
+    "storage",
+    "nativeMessaging"
+  ],
+  "background": {
+    "scripts": [
+      "shared/utils/error.js",
+      "shared/utils/timeout.js",
+      "shared/utils/router.js",
+      "shared/handlers/navigation.js",
+      "shared/handlers/tabs.js",
+      "shared/handlers/cookies.js",
+      "shared/handlers/screenshot.js",
+      "shared/handlers/session.js",
+      "background/main.js"
+    ],
+    "persistent": true
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "shared/utils/error.js",
+        "shared/content/state.js",
+        "shared/content/interact.js",
+        "shared/content/wait.js",
+        "shared/content/get.js",
+        "shared/content/eval.js",
+        "shared/content/scroll.js",
+        "shared/content/main.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "browser_action": {
+    "default_popup": "shared/popup/popup.html",
+    "default_icon": {
+      "48": "shared/icons/icon-48.png",
+      "96": "shared/icons/icon-96.png"
+    }
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "browse-pilot@localhost",
+      "strict_min_version": "109.0"
+    }
+  }
+}

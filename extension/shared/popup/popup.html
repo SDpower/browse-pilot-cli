@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Browse Pilot</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Browse Pilot</h1>
+
+    <div id="status" class="status disconnected">
+      <span class="dot"></span>
+      <span id="status-text">未連線</span>
+    </div>
+
+    <div class="info">
+      <div class="info-row">
+        <label>瀏覽器：</label>
+        <span id="browser-type">-</span>
+      </div>
+      <div class="info-row">
+        <label>連接埠：</label>
+        <span id="port">-</span>
+      </div>
+      <div class="info-row">
+        <label>版本：</label>
+        <span id="version">-</span>
+      </div>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

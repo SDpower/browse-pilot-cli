@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "Browse Pilot",
+  "version": "1.0.0",
+  "description": "跨瀏覽器自動化橋接器 — browse-pilot-cli",
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "cookies",
+    "webNavigation",
+    "storage",
+    "nativeMessaging",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "shared/utils/error.js",
+        "shared/content/state.js",
+        "shared/content/interact.js",
+        "shared/content/wait.js",
+        "shared/content/get.js",
+        "shared/content/eval.js",
+        "shared/content/scroll.js",
+        "shared/content/main.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "action": {
+    "default_popup": "shared/popup/popup.html",
+    "default_icon": {
+      "16": "shared/icons/icon-16.png",
+      "48": "shared/icons/icon-48.png",
+      "128": "shared/icons/icon-128.png"
+    }
+  }
+}
