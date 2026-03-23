@@ -22,7 +22,6 @@ go.work.sum
 # Node / Extension build
 node_modules/
 *.tgz
-package-lock.json
 
 # IDE
 .idea/
