@@ -14,18 +14,32 @@
 - 🐍 Python session — 透過 `browser` 物件編寫自動化腳本
 - ⚡ 單一 Go binary — 同時提供 CLI、WebSocket server、Native Messaging host、MCP server
 - 🌍 12 種語言 — 自動偵測系統語系（macOS AppleLocale / LANG）
+- 🔌 Plugin Marketplace — 在 Claude Code 中透過 `/plugin marketplace add` 安裝
 
 > 📖 **English version**: [README.md](README.md)
 
 ## 安裝
 
-### 前置需求
+### Claude Code Plugin（推薦）
+
+在 Claude Code 中執行：
+
+```shell
+/plugin marketplace add SDpower/browse-pilot-cli
+/plugin install browse-pilot@browse-pilot-marketplace
+```
+
+自動設定 MCP server，無需手動設定。
+
+### 手動安裝
+
+#### 前置需求
 
 - Go 1.22+
 - Node.js 18+（Extension 建置與 lint）
 - Firefox 109+ / Chrome 110+ / Edge 110+
 
-### 從原始碼建置
+#### 從原始碼建置
 
 ```bash
 # 安裝 Go binary
@@ -363,6 +377,23 @@ CLI 訊息會自動根據系統語系切換。支援語言：
 ```bash
 LANG=ja_JP.UTF-8 bp_cli --help    # 日文
 LANG=en_US.UTF-8 bp_cli doctor    # 英文
+```
+
+## Plugin Marketplace（團隊設定）
+
+為團隊自動啟用 browse-pilot，在 `.claude/settings.json` 加入：
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "browse-pilot-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "SDpower/browse-pilot-cli"
+      }
+    }
+  }
+}
 ```
 
 ## 文件

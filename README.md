@@ -14,18 +14,32 @@ Cross-browser automation CLI that controls Firefox, Chrome, and Edge via WebExte
 - 🐍 Python session — write automation scripts with a `browser` object
 - ⚡ Single Go binary — serves as CLI, WebSocket server, Native Messaging host, and MCP server
 - 🌍 12 languages — auto-detects system locale (macOS AppleLocale / LANG)
+- 🔌 Plugin Marketplace — install via `/plugin marketplace add` in Claude Code
 
 > 📖 **繁體中文版**: [README_ZH_TW.md](README_ZH_TW.md)
 
 ## Installation
 
-### Prerequisites
+### Claude Code Plugin (Recommended)
+
+In Claude Code, run:
+
+```shell
+/plugin marketplace add SDpower/browse-pilot-cli
+/plugin install browse-pilot@browse-pilot-marketplace
+```
+
+This automatically sets up the MCP server. No manual configuration needed.
+
+### Manual Installation
+
+#### Prerequisites
 
 - Go 1.22+
 - Node.js 18+ (for extension build & lint)
 - Firefox 109+ / Chrome 110+ / Edge 110+
 
-### Build from Source
+#### Build from Source
 
 ```bash
 # Install via go install
@@ -363,6 +377,23 @@ Override with the `LANG` environment variable:
 ```bash
 LANG=ja_JP.UTF-8 bp_cli --help    # Japanese
 LANG=zh_TW.UTF-8 bp_cli doctor    # Traditional Chinese
+```
+
+## Plugin Marketplace (Team Setup)
+
+To auto-enable browse-pilot for your team, add to `.claude/settings.json`:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "browse-pilot-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "SDpower/browse-pilot-cli"
+      }
+    }
+  }
+}
 ```
 
 ## Documentation

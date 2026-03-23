@@ -1,0 +1,28 @@
+{
+  "name": "browse-pilot-marketplace",
+  "owner": {
+    "name": "SteveLuo",
+    "email": "info@sd.idv.tw"
+  },
+  "metadata": {
+    "description": "Cross-browser automation plugins for Claude Code",
+    "version": "0.1.3"
+  },
+  "plugins": [
+    {
+      "name": "browse-pilot",
+      "source": "./plugins/browse-pilot",
+      "description": "Control Firefox/Chrome/Edge via WebExtension API — navigate, click, type, screenshot, eval, and more",
+      "version": "0.1.3",
+      "author": {
+        "name": "SteveLuo"
+      },
+      "homepage": "https://github.com/SDpower/browse-pilot-cli",
+      "repository": "https://github.com/SDpower/browse-pilot-cli",
+      "license": "MIT",
+      "keywords": ["browser", "automation", "webextension", "firefox", "chrome", "mcp"],
+      "category": "automation",
+      "tags": ["browser-automation", "web-scraping", "testing"]
+    }
+  ]
+}

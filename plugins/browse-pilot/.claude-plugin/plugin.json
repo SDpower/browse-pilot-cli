@@ -1,0 +1,15 @@
+{
+  "name": "browse-pilot",
+  "description": "Cross-browser automation — control Firefox/Chrome/Edge via WebExtension API",
+  "version": "0.1.0",
+  "mcpServers": {
+    "browse-pilot": {
+      "command": "bp_cli",
+      "args": ["--mcp"],
+      "env": {
+        "BP_BROWSER": "firefox",
+        "BP_PORT": "9222"
+      }
+    }
+  }
+}
