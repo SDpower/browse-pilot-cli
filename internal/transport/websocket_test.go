@@ -4,28 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
-
-// testPort 取得目前可用的本機連接埠，避免共享 CI runner 上的固定連接埠衝突。
-func testPort(t *testing.T) int {
-	t.Helper()
-
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatalf("無法取得測試連接埠: %v", err)
-	}
-	port := listener.Addr().(*net.TCPAddr).Port
-	if err := listener.Close(); err != nil {
-		t.Fatalf("無法釋放測試連接埠: %v", err)
-	}
-	return port
-}
 
 // dialTestWS 嘗試連線至本地測試 WebSocket server，最多重試數次
 func dialTestWS(t *testing.T, port int) *websocket.Conn {
@@ -65,11 +49,10 @@ func startWithClient(t *testing.T, tr *WSTransport, port int) *websocket.Conn {
 
 // TestWSTransportStartAndConnect 驗證 WSTransport 可啟動並接受連線
 func TestWSTransportStartAndConnect(t *testing.T) {
-	port := testPort(t)
-	cfg := Config{Port: port, Timeout: 5 * time.Second}
+	cfg := Config{Port: 19222, Timeout: 5 * time.Second}
 	tr := NewWSTransport(cfg)
 
-	conn := startWithClient(t, tr, port)
+	conn := startWithClient(t, tr, 19222)
 	defer tr.Close()
 	defer conn.Close()
 
@@ -83,11 +66,10 @@ func TestWSTransportStartAndConnect(t *testing.T) {
 
 // TestWSTransportSendReceive 驗證 Send 可正確發送並接收回應
 func TestWSTransportSendReceive(t *testing.T) {
-	port := testPort(t)
-	cfg := Config{Port: port, Timeout: 5 * time.Second}
+	cfg := Config{Port: 19223, Timeout: 5 * time.Second}
 	tr := NewWSTransport(cfg)
 
-	conn := startWithClient(t, tr, port)
+	conn := startWithClient(t, tr, 19223)
 	defer tr.Close()
 	defer conn.Close()
 
@@ -131,11 +113,10 @@ func TestWSTransportSendReceive(t *testing.T) {
 
 // TestWSTransportSendTimeout 驗證當無回應時 Send 會因 ctx 逾時而返回錯誤
 func TestWSTransportSendTimeout(t *testing.T) {
-	port := testPort(t)
-	cfg := Config{Port: port, Timeout: 5 * time.Second}
+	cfg := Config{Port: 19224, Timeout: 5 * time.Second}
 	tr := NewWSTransport(cfg)
 
-	conn := startWithClient(t, tr, port)
+	conn := startWithClient(t, tr, 19224)
 	defer tr.Close()
 	defer conn.Close()
 
@@ -153,8 +134,7 @@ func TestWSTransportSendTimeout(t *testing.T) {
 
 // TestWSTransportSendNoConnection 驗證無連線時 Send 等待至逾時後回傳錯誤
 func TestWSTransportSendNoConnection(t *testing.T) {
-	port := testPort(t)
-	cfg := Config{Port: port, Timeout: 5 * time.Second}
+	cfg := Config{Port: 19225, Timeout: 5 * time.Second}
 	tr := NewWSTransport(cfg)
 
 	// 使用短逾時啟動 Start（不建立連線，預期逾時）
@@ -178,11 +158,10 @@ func TestWSTransportSendNoConnection(t *testing.T) {
 
 // TestWSTransportReconnect 驗證舊連線斷開後，新連線可正常工作
 func TestWSTransportReconnect(t *testing.T) {
-	port := testPort(t)
-	cfg := Config{Port: port, Timeout: 5 * time.Second}
+	cfg := Config{Port: 19226, Timeout: 5 * time.Second}
 	tr := NewWSTransport(cfg)
 
-	conn1 := startWithClient(t, tr, port)
+	conn1 := startWithClient(t, tr, 19226)
 	defer tr.Close()
 
 	// 第一次連線然後斷開
@@ -190,7 +169,7 @@ func TestWSTransportReconnect(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// 第二次連線，模擬 Extension 回應
-	conn2 := dialTestWS(t, port)
+	conn2 := dialTestWS(t, 19226)
 	defer conn2.Close()
 
 	go func() {
@@ -227,10 +206,9 @@ func TestWSTransportReconnect(t *testing.T) {
 
 // TestWSTransportDisconnectFailsPending 驗證連線中斷會讓未完成請求立即失敗。
 func TestWSTransportDisconnectFailsPending(t *testing.T) {
-	port := testPort(t)
-	cfg := Config{Browser: "firefox", Port: port, Timeout: 5 * time.Second}
+	cfg := Config{Browser: "firefox", Port: 19231, Timeout: 5 * time.Second}
 	tr := NewWSTransport(cfg)
-	conn := startWithClient(t, tr, port)
+	conn := startWithClient(t, tr, 19231)
 	defer tr.Close()
 
 	requestRead := make(chan struct{})
@@ -275,8 +253,7 @@ func TestWSTransportDisconnectFailsPending(t *testing.T) {
 
 // TestWSTransportHTTPUpgrade 驗證非 WebSocket 請求的 HTTP 處理
 func TestWSTransportHTTPUpgrade(t *testing.T) {
-	port := testPort(t)
-	cfg := Config{Port: port, Timeout: 5 * time.Second}
+	cfg := Config{Port: 19227, Timeout: 5 * time.Second}
 	tr := NewWSTransport(cfg)
 
 	// Start 會等待連線，用短逾時讓它先跑起來
@@ -286,7 +263,7 @@ func TestWSTransportHTTPUpgrade(t *testing.T) {
 	defer tr.Close()
 
 	// 普通 HTTP 請求應回傳 400 或類似錯誤（非 WebSocket upgrade）
-	resp, err := http.Get(fmt.Sprintf("http://127.0.0.1:%d/", port))
+	resp, err := http.Get("http://127.0.0.1:19227/")
 	if err != nil {
 		t.Fatalf("HTTP GET 失敗: %v", err)
 	}
@@ -299,8 +276,7 @@ func TestWSTransportHTTPUpgrade(t *testing.T) {
 
 // TestWSTransportStartDoesNotWaitForConnection 驗證 Start 綁定成功後不等待 Extension。
 func TestWSTransportStartDoesNotWaitForConnection(t *testing.T) {
-	port := testPort(t)
-	cfg := Config{Port: port, Timeout: 5 * time.Second}
+	cfg := Config{Port: 19228, Timeout: 5 * time.Second}
 	tr := NewWSTransport(cfg)
 	defer tr.Close()
 
@@ -320,14 +296,13 @@ func TestWSTransportStartDoesNotWaitForConnection(t *testing.T) {
 
 // TestWSTransportStartPortInUse 驗證連接埠占用會同步回傳啟動失敗。
 func TestWSTransportStartPortInUse(t *testing.T) {
-	port := testPort(t)
-	first := NewWSTransport(Config{Port: port, Timeout: 5 * time.Second})
+	first := NewWSTransport(Config{Port: 19229, Timeout: 5 * time.Second})
 	if err := first.Start(context.Background()); err != nil {
 		t.Fatalf("第一個 transport 啟動失敗: %v", err)
 	}
 	defer first.Close()
 
-	second := NewWSTransport(Config{Port: port, Timeout: 5 * time.Second})
+	second := NewWSTransport(Config{Port: 19229, Timeout: 5 * time.Second})
 	err := second.Start(context.Background())
 	if err == nil {
 		second.Close()
@@ -337,8 +312,7 @@ func TestWSTransportStartPortInUse(t *testing.T) {
 
 // TestWSTransportSendWaitsForConnection 驗證 Send 在無連線時會等待連入
 func TestWSTransportSendWaitsForConnection(t *testing.T) {
-	port := testPort(t)
-	cfg := Config{Port: port, Timeout: 5 * time.Second}
+	cfg := Config{Port: 19230, Timeout: 5 * time.Second}
 	tr := NewWSTransport(cfg)
 
 	// Start 短逾時（server 啟動但不等連線）
@@ -350,7 +324,7 @@ func TestWSTransportSendWaitsForConnection(t *testing.T) {
 	// 在背景延遲連線，模擬 Extension
 	go func() {
 		time.Sleep(300 * time.Millisecond)
-		conn := dialTestWS(t, port)
+		conn := dialTestWS(t, 19230)
 		defer conn.Close()
 
 		// 讀取 request 並回傳 response

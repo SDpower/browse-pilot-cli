@@ -2,8 +2,11 @@ package output
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/SDpower/browse-pilot-cli/internal/i18n"
 )
 
 func TestPrintStateHuman(t *testing.T) {
@@ -27,7 +30,7 @@ func TestPrintStateHuman(t *testing.T) {
 	if !strings.Contains(output, "帳號") {
 		t.Error("應包含元素名稱")
 	}
-	if !strings.Contains(output, "2 個") {
+	if !strings.Contains(output, fmt.Sprintf(i18n.T("inspection.state.element_count"), 2)) {
 		t.Error("應包含元素數量")
 	}
 }
@@ -57,7 +60,7 @@ func TestPrintStateEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("PrintState 空頁面失敗: %v", err)
 	}
-	if !strings.Contains(buf.String(), "無可互動元素") {
+	if !strings.Contains(buf.String(), i18n.T("inspection.state.no_elements")) {
 		t.Error("空頁面應顯示提示")
 	}
 }
