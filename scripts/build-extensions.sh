@@ -80,3 +80,5 @@ echo "=== 建置完成 ==="
 echo "Firefox: $DIST_DIR/firefox/"
 echo "Chrome:  $DIST_DIR/chrome/"
 echo "Edge:    $DIST_DIR/edge/"
+
+node "$PROJECT_DIR/scripts/check-background-scope.mjs"

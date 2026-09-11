@@ -50,7 +50,7 @@ bp_cli --version
 3. 選擇 `dist/firefox/manifest.json`
 4. Extension 圖示出現於工具列即完成
 
-> 正式發佈後可從 AMO 安裝，免除步驟 1–3。
+Firefox Extension 是本機 MCP 橋接元件，目前以開發者模式載入，不透過 AMO 發布。
 
 ### Chrome
 
@@ -73,24 +73,17 @@ bp_cli --version
 Chrome 與 Edge 透過 Native Messaging 與 CLI 通訊，需要安裝 NM Host 清單：
 
 ```bash
-bp_cli setup firefox   # 安裝 Firefox NM Host
 bp_cli setup chrome    # 安裝 Chrome NM Host
 bp_cli setup edge      # 安裝 Edge NM Host
 ```
+
+Firefox 使用 WebSocket，不需要安裝 Native Messaging Host。
 
 `bp_cli setup` 會自動：
 1. 將 `bp_cli` binary 的絕對路徑寫入 NM Host 清單（JSON）
 2. 將清單複製至各平台標準目錄
 
 ### 各平台 NM Host 路徑
-
-#### Firefox
-
-| 平台 | 路徑 |
-|------|------|
-| macOS | `~/Library/Application Support/Mozilla/NativeMessagingHosts/browse_pilot.json` |
-| Linux | `~/.mozilla/native-messaging-hosts/browse_pilot.json` |
-| Windows | `HKCU\Software\Mozilla\NativeMessagingHosts\browse_pilot` |
 
 #### Chrome
 

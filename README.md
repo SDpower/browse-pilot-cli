@@ -1,6 +1,6 @@
 # browse-pilot-cli (bp)
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.1.4-blue)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 Cross-browser automation CLI that controls Firefox, Chrome, and Edge via WebExtension API — no CDP required.
@@ -10,26 +10,26 @@ Cross-browser automation CLI that controls Firefox, Chrome, and Edge via WebExte
 - 🌐 Supports Firefox, Chrome, and Edge
 - 🔒 Uses your real browser profile (cookies, login state, history preserved)
 - 🚫 No CDP dependency — operates through WebExtension API with strong anti-detection
-- 🤖 Native MCP support — integrates directly with Claude Code
+- 🤖 Native MCP support — integrates with Codex, ChatGPT Desktop, and Claude Code
 - 🐍 Python session — write automation scripts with a `browser` object
 - ⚡ Single Go binary — serves as CLI, WebSocket server, Native Messaging host, and MCP server
 - 🌍 12 languages — auto-detects system locale (macOS AppleLocale / LANG)
-- 🔌 Plugin Marketplace — install via `/plugin marketplace add` in Claude Code
+- 🔌 Codex Plugin — installs the Skill and local MCP server together
 
 > 📖 **繁體中文版**: [README_ZH_TW.md](README_ZH_TW.md)
 
 ## Installation
 
-### Claude Code Plugin (Recommended)
+### Codex Plugin (Recommended)
 
-In Claude Code, run:
+In Codex CLI, run:
 
-```shell
-/plugin marketplace add SDpower/browse-pilot-cli
-/plugin install browse-pilot@browse-pilot-marketplace
+```bash
+codex plugin marketplace add SDpower/browse-pilot-cli
+codex plugin add browse-pilot@browse-pilot-marketplace
 ```
 
-This automatically sets up the MCP server. No manual configuration needed.
+The plugin loads the Browse Pilot Skill and local STDIO MCP server. Start a new Codex session after installation.
 
 ### Manual Installation
 
@@ -85,13 +85,11 @@ bash scripts/build-extensions.sh
 Chrome and Edge communicate via Native Messaging, which requires host manifest installation:
 
 ```bash
-bp_cli setup firefox
 bp_cli setup chrome
 bp_cli setup edge
-
-# Or set up all browsers at once
-bp_cli setup --all
 ```
+
+Firefox uses WebSocket and does not require a Native Messaging host.
 
 ## Quick Start
 
@@ -259,27 +257,16 @@ All wait commands support `--timeout <ms>` (default 30000).
 | `bp_cli close [--all]` | Close connection |
 | `bp_cli setup <browser>` | Install Native Messaging Host (`--all` for all browsers) |
 
-## MCP Integration (Claude Code)
+## MCP Integration (Codex and ChatGPT Desktop)
 
-`bp_cli` supports the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) for direct integration with Claude Code and other AI agents.
+`bp_cli` supports the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) for direct integration with Codex, ChatGPT Desktop, and other MCP clients.
 
 ### Configuration
 
-Add to `.claude/mcp.json` or `claude_desktop_config.json`:
+Without the plugin, add the server directly to Codex:
 
-```json
-{
-  "mcpServers": {
-    "browse-pilot": {
-      "command": "bp_cli",
-      "args": ["--mcp"],
-      "env": {
-        "BP_BROWSER": "firefox",
-        "BP_PORT": "9222"
-      }
-    }
-  }
-}
+```bash
+codex mcp add browse-pilot -- bp_cli --mcp --browser firefox --port 9222 --timeout 60000
 ```
 
 ### Available MCP Tools
@@ -309,7 +296,7 @@ Add to `.claude/mcp.json` or `claude_desktop_config.json`:
 ## Architecture
 
 ```
-Claude Code / AI Agent
+Codex / ChatGPT Desktop / AI Agent
     │ MCP protocol (stdio)
     ▼
 browse-pilot-cli (Go binary)
@@ -379,26 +366,21 @@ LANG=ja_JP.UTF-8 bp_cli --help    # Japanese
 LANG=zh_TW.UTF-8 bp_cli doctor    # Traditional Chinese
 ```
 
-## Plugin Marketplace (Team Setup)
+## Codex Plugin Marketplace
 
-To auto-enable browse-pilot for your team, add to `.claude/settings.json`:
+The Codex marketplace is stored at `.agents/plugins/marketplace.json`. Add it from GitHub and install the plugin:
 
-```json
-{
-  "extraKnownMarketplaces": {
-    "browse-pilot-marketplace": {
-      "source": {
-        "source": "github",
-        "repo": "SDpower/browse-pilot-cli"
-      }
-    }
-  }
-}
+```bash
+codex plugin marketplace add SDpower/browse-pilot-cli
+codex plugin add browse-pilot@browse-pilot-marketplace
 ```
+
+The Claude Code-compatible marketplace remains available at `.claude-plugin/marketplace.json`.
 
 ## Documentation
 
 - [Installation Guide](docs/INSTALL.md)
+- [Codex Installation and Usage Guide](docs/CODEX_INSTALL.md) ([繁體中文版](docs/CODEX_INSTALL_ZH_TW.md))
 - [Command Reference](docs/COMMANDS.md)
 - [Communication Protocol](docs/PROTOCOL.md)
 - [Cross-Browser Compatibility](docs/BROWSERS.md)

@@ -55,6 +55,18 @@
   "overrides": [
     {
       "files": [
+        "scripts/check-background-scope.mjs"
+      ],
+      "env": {
+        "browser": false,
+        "node": true
+      },
+      "parserOptions": {
+        "sourceType": "module"
+      }
+    },
+    {
+      "files": [
         "extension/shared/content/state.js",
         "extension/shared/content/interact.js",
         "extension/shared/content/wait.js",

@@ -40,10 +40,13 @@ const Router = {
       const result = await handler(params || {});
       return { id, result };
     } catch (err) {
-      // handler 拋出例外時回傳 EXTENSION_ERROR
-      const code = (err && err.code) ? err.code : -32000;
-      const message = (err && err.message) ? err.message : String(err);
-      const data = (err && err.data) ? err.data : null;
+      // 已結構化的 RPCError 必須完整保留 code、message 與 data。
+      // 一般例外則統一標記為 EXTENSION_ERROR，交由 MCP 層產生安全訊息。
+      const code = Number.isInteger(err?.code) ? err.code : -32000;
+      const message = typeof err?.message === 'string' ? err.message : String(err);
+      const data = err && Object.prototype.hasOwnProperty.call(err, 'data')
+        ? err.data
+        : null;
       return { id, error: { code, message, data } };
     }
   },

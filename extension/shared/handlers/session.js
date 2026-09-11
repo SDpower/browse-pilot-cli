@@ -2,10 +2,11 @@
  * Session 管理 handler：回報擴充功能連線狀態與基本資訊
  */
 
-// 相容 Firefox（browser）和 Chrome/Edge（chrome）
-const api = typeof browser !== 'undefined' ? browser : chrome;
+const SessionHandler = (() => {
+  // 將瀏覽器 API 留在 handler 私有作用域，避免背景腳本共用全域名稱衝突。
+  const api = typeof browser !== 'undefined' ? browser : chrome;
 
-const SessionHandler = {
+  return {
   /**
    * 取得擴充功能目前的狀態與版本資訊
    * @returns {Promise<{ connected: boolean, browser: string, version: string, extensionId: string }>}
@@ -20,4 +21,5 @@ const SessionHandler = {
       extensionId: api.runtime.id,
     };
   },
-};
+  };
+})();

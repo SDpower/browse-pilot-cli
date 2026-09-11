@@ -1,6 +1,6 @@
 # browse-pilot-cli (bp)
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.1.4-blue)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 跨瀏覽器自動化 CLI 工具，透過 WebExtension API 控制 Firefox、Chrome、Edge，不依賴 CDP。
@@ -10,26 +10,26 @@
 - 🌐 支援 Firefox、Chrome、Edge 三大瀏覽器
 - 🔒 使用真實瀏覽器 profile（cookie、登入狀態完整保留）
 - 🚫 不依賴 CDP — 透過 WebExtension API，反偵測能力強
-- 🤖 原生 MCP 支援 — 直接對接 Claude Code
+- 🤖 原生 MCP 支援 — 對接 Codex、ChatGPT Desktop 與 Claude Code
 - 🐍 Python session — 透過 `browser` 物件編寫自動化腳本
 - ⚡ 單一 Go binary — 同時提供 CLI、WebSocket server、Native Messaging host、MCP server
 - 🌍 12 種語言 — 自動偵測系統語系（macOS AppleLocale / LANG）
-- 🔌 Plugin Marketplace — 在 Claude Code 中透過 `/plugin marketplace add` 安裝
+- 🔌 Codex Plugin — 一次安裝 Skill 與本機 MCP Server
 
 > 📖 **English version**: [README.md](README.md)
 
 ## 安裝
 
-### Claude Code Plugin（推薦）
+### Codex Plugin（推薦）
 
-在 Claude Code 中執行：
+在 Codex CLI 中執行：
 
-```shell
-/plugin marketplace add SDpower/browse-pilot-cli
-/plugin install browse-pilot@browse-pilot-marketplace
+```bash
+codex plugin marketplace add SDpower/browse-pilot-cli
+codex plugin add browse-pilot@browse-pilot-marketplace
 ```
 
-自動設定 MCP server，無需手動設定。
+Plugin 會一併載入 Browse Pilot Skill 與本機 STDIO MCP Server。安裝後請開啟新的 Codex 工作階段。
 
 ### 手動安裝
 
@@ -85,13 +85,11 @@ bash scripts/build-extensions.sh
 Chrome 和 Edge 透過 Native Messaging 通訊，需先執行設定指令：
 
 ```bash
-bp_cli setup firefox
 bp_cli setup chrome
 bp_cli setup edge
-
-# 或一次設定所有瀏覽器
-bp_cli setup --all
 ```
+
+Firefox 使用 WebSocket，不需要 Native Messaging Host。
 
 ## 快速開始
 
@@ -259,27 +257,16 @@ bp_cli python --reset
 | `bp_cli close [--all]` | 關閉連線 |
 | `bp_cli setup <browser>` | 設定 Native Messaging Host（可加 `--all`） |
 
-## MCP 整合（Claude Code）
+## MCP 整合（Codex 與 ChatGPT Desktop）
 
-`bp_cli` 支援 [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)，可直接作為 Claude Code 的瀏覽器控制工具。
+`bp_cli` 支援 [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)，可直接作為 Codex、ChatGPT Desktop 與其他 MCP Client 的瀏覽器控制工具。
 
 ### 設定
 
-在 `.claude/mcp.json` 或 `claude_desktop_config.json` 加入：
+不使用 Plugin 時，可直接加入 Codex MCP：
 
-```json
-{
-  "mcpServers": {
-    "browse-pilot": {
-      "command": "bp_cli",
-      "args": ["--mcp"],
-      "env": {
-        "BP_BROWSER": "firefox",
-        "BP_PORT": "9222"
-      }
-    }
-  }
-}
+```bash
+codex mcp add browse-pilot -- bp_cli --mcp --browser firefox --port 9222 --timeout 60000
 ```
 
 ### 可用 MCP Tools
@@ -309,7 +296,7 @@ bp_cli python --reset
 ## 架構
 
 ```
-Claude Code / AI Agent
+Codex / ChatGPT Desktop / AI Agent
     │ MCP protocol (stdio)
     ▼
 browse-pilot-cli (Go binary)
@@ -379,26 +366,21 @@ LANG=ja_JP.UTF-8 bp_cli --help    # 日文
 LANG=en_US.UTF-8 bp_cli doctor    # 英文
 ```
 
-## Plugin Marketplace（團隊設定）
+## Codex Plugin Marketplace
 
-為團隊自動啟用 browse-pilot，在 `.claude/settings.json` 加入：
+本專案的 Codex marketplace 位於 `.agents/plugins/marketplace.json`。從 GitHub 加入並安裝：
 
-```json
-{
-  "extraKnownMarketplaces": {
-    "browse-pilot-marketplace": {
-      "source": {
-        "source": "github",
-        "repo": "SDpower/browse-pilot-cli"
-      }
-    }
-  }
-}
+```bash
+codex plugin marketplace add SDpower/browse-pilot-cli
+codex plugin add browse-pilot@browse-pilot-marketplace
 ```
+
+Claude Code 相容 marketplace 仍保留於 `.claude-plugin/marketplace.json`。
 
 ## 文件
 
 - [安裝指南](docs/INSTALL.md)
+- [Codex 安裝與使用指南](docs/CODEX_INSTALL_ZH_TW.md) ([English version](docs/CODEX_INSTALL.md))
 - [完整指令參考](docs/COMMANDS.md)
 - [通訊協議](docs/PROTOCOL.md)
 - [跨瀏覽器相容性](docs/BROWSERS.md)

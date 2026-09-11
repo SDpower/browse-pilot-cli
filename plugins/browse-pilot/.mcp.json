@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "browse-pilot": {
+      "command": "bp_cli",
+      "args": [
+        "--mcp",
+        "--browser",
+        "firefox",
+        "--port",
+        "9222",
+        "--timeout",
+        "60000"
+      ],
+      "enabled": true,
+      "startup_timeout_sec": 10,
+      "tool_timeout_sec": 60
+    }
+  }
+}

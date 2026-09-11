@@ -52,13 +52,17 @@ jobs:
 
       - run: npm ci
 
-      - run: npx eslint extension/
+      - run: npm run lint
 
   extension-build:
     name: Extension Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
       - name: Build Extensions
         run: bash scripts/build-extensions.sh

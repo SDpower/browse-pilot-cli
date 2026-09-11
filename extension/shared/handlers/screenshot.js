@@ -3,10 +3,11 @@
  * captureVisibleTab 須在 background 呼叫，需要 activeTab 權限
  */
 
-// 相容 Firefox（browser）和 Chrome/Edge（chrome）
-const api = typeof browser !== 'undefined' ? browser : chrome;
+const ScreenshotHandler = (() => {
+  // 將瀏覽器 API 留在 handler 私有作用域，避免背景腳本共用全域名稱衝突。
+  const api = typeof browser !== 'undefined' ? browser : chrome;
 
-const ScreenshotHandler = {
+  return {
   /**
    * 截取畫面
    * @param {Object} params - 選項參數
@@ -123,4 +124,5 @@ const ScreenshotHandler = {
       segments: captures,
     };
   },
-};
+  };
+})();

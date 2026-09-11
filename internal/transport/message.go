@@ -48,6 +48,19 @@ func (e *RPCError) Error() string {
 	return fmt.Sprintf("RPC 錯誤 %d: %s", e.Code, e.Message)
 }
 
+// errorData 產生本機 transport 錯誤可安全公開的連線資訊。
+func errorData(cfg Config) json.RawMessage {
+	data := map[string]any{}
+	if cfg.Browser != "" {
+		data["browser"] = cfg.Browser
+	}
+	if cfg.Browser == "firefox" && cfg.Port > 0 {
+		data["port"] = cfg.Port
+	}
+	encoded, _ := json.Marshal(data)
+	return encoded
+}
+
 // 錯誤碼常數。
 // -32700 至 -32600 為 JSON-RPC 2.0 規範保留；
 // -32000 至 -32099 為本專案自定義錯誤碼。

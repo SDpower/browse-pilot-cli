@@ -510,10 +510,9 @@ bp_cli sessions --json
 
 ### `bp_cli setup <browser>`
 
-安裝 Native Messaging Host 清單至系統。
+安裝 Chrome 或 Edge 的 Native Messaging Host 清單至系統。Firefox 使用 WebSocket，不需要此設定。
 
 ```bash
-bp_cli setup firefox
 bp_cli setup chrome
 bp_cli setup edge
 ```

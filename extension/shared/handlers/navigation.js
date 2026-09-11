@@ -3,10 +3,11 @@
  * 使用 tabs API 進行頁面導航
  */
 
-// 相容 Firefox（browser）和 Chrome/Edge（chrome）
-const api = typeof browser !== 'undefined' ? browser : chrome;
+const NavigationHandler = (() => {
+  // 將瀏覽器 API 留在 handler 私有作用域，避免背景腳本共用全域名稱衝突。
+  const api = typeof browser !== 'undefined' ? browser : chrome;
 
-const NavigationHandler = {
+  return {
   /**
    * 導航到指定 URL，等待頁面載入完成
    * @param {{ url: string }} params
@@ -57,4 +58,5 @@ const NavigationHandler = {
     await api.tabs.reload();
     return { success: true };
   },
-};
+  };
+})();

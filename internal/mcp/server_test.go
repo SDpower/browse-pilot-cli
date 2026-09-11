@@ -5,9 +5,48 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/SDpower/browse-pilot-cli/internal/transport"
 )
+
+type stubTransport struct {
+	send func(context.Context, *transport.Request) (*transport.Response, error)
+}
+
+func (s *stubTransport) Start(context.Context) error { return nil }
+func (s *stubTransport) Send(ctx context.Context, req *transport.Request) (*transport.Response, error) {
+	return s.send(ctx, req)
+}
+func (s *stubTransport) Close() error      { return nil }
+func (s *stubTransport) IsConnected() bool { return true }
+func (s *stubTransport) Type() string      { return "stub" }
+
+func decodeToolError(t *testing.T, data []byte) toolErrorEnvelope {
+	t.Helper()
+	var response struct {
+		Result struct {
+			Content []struct {
+				Text string `json:"text"`
+			} `json:"content"`
+			IsError bool `json:"isError"`
+		} `json:"result"`
+	}
+	if err := json.Unmarshal(data, &response); err != nil {
+		t.Fatalf("無法解析 MCP 回應: %v", err)
+	}
+	if !response.Result.IsError || len(response.Result.Content) != 1 {
+		t.Fatalf("預期單一 tool error content，實際為 %s", data)
+	}
+	var envelope toolErrorEnvelope
+	if err := json.Unmarshal([]byte(response.Result.Content[0].Text), &envelope); err != nil {
+		t.Fatalf("tool error text 不是 JSON: %v", err)
+	}
+	return envelope
+}
 
 // TestServerInitialize 測試 MCP 初始化握手流程。
 // 驗證 server 回傳正確的 protocolVersion 和 capabilities。
@@ -53,6 +92,10 @@ func TestServerInitialize(t *testing.T) {
 	}
 	if result["protocolVersion"] != "2024-11-05" {
 		t.Errorf("protocolVersion 不正確: %v", result["protocolVersion"])
+	}
+	instructions, ok := result["instructions"].(string)
+	if !ok || instructions == "" {
+		t.Error("initialize 回應應包含非空的 server instructions")
 	}
 }
 
@@ -245,6 +288,7 @@ func TestServerInitializeWithoutTransport(t *testing.T) {
 // tool call 回傳「Extension 未連線」錯誤而非 panic。
 func TestServerToolCallWithoutTransport(t *testing.T) {
 	s := NewServer(nil, false)
+	s.SetBrowserContext("firefox", 9222)
 	RegisterAllTools(s)
 
 	var outBuf bytes.Buffer
@@ -276,6 +320,125 @@ func TestServerToolCallWithoutTransport(t *testing.T) {
 	isError, _ := result["isError"].(bool)
 	if !isError {
 		t.Error("transport 未連線時 tool call 應回傳 isError: true")
+	}
+
+	envelope := decodeToolError(t, outBuf.Bytes())
+	if envelope.OK {
+		t.Error("tool error 的 ok 應為 false")
+	}
+	if envelope.Error.Code != transport.ErrConnectionError || envelope.Error.Name != "ConnectionError" {
+		t.Errorf("連線錯誤識別不正確: %+v", envelope.Error)
+	}
+	if !envelope.Error.Retryable || envelope.Error.Action == "" {
+		t.Errorf("連線錯誤應提供可重試指示: %+v", envelope.Error)
+	}
+	errorData, ok := envelope.Error.Data.(map[string]any)
+	if !ok || errorData["browser"] != "firefox" || errorData["port"] != float64(9222) {
+		t.Errorf("連線錯誤 data 不正確: %#v", envelope.Error.Data)
+	}
+}
+
+func TestServerPreservesExtensionRPCError(t *testing.T) {
+	rpcData := json.RawMessage(`{"index":7,"selector":"#submit"}`)
+	tr := &stubTransport{send: func(_ context.Context, req *transport.Request) (*transport.Response, error) {
+		return &transport.Response{
+			ID: req.ID,
+			Error: &transport.RPCError{
+				Code:    transport.ErrElementNotFound,
+				Message: "找不到指定元素",
+				Data:    rpcData,
+			},
+		}, nil
+	}}
+	s := NewServer(tr, false)
+	RegisterAllTools(s)
+
+	var outBuf bytes.Buffer
+	s.writer = &outBuf
+	params := json.RawMessage(`{"name":"bp_click","arguments":{"index":7}}`)
+	s.handleRequest(context.Background(), &jsonRPCRequest{JSONRPC: "2.0", ID: 11, Method: "tools/call", Params: params})
+
+	envelope := decodeToolError(t, outBuf.Bytes())
+	if envelope.Error.Code != transport.ErrElementNotFound || envelope.Error.Name != "ElementNotFound" {
+		t.Errorf("Extension 錯誤 code/name 未保留: %+v", envelope.Error)
+	}
+	if envelope.Error.Message != "找不到指定元素" {
+		t.Errorf("Extension 錯誤 message 未保留: %q", envelope.Error.Message)
+	}
+	data, ok := envelope.Error.Data.(map[string]any)
+	if !ok || data["index"] != float64(7) || data["selector"] != "#submit" {
+		t.Errorf("Extension 錯誤 data 未保留: %#v", envelope.Error.Data)
+	}
+}
+
+func TestServerToolCallUsesIndependentTimeout(t *testing.T) {
+	tr := &stubTransport{send: func(ctx context.Context, _ *transport.Request) (*transport.Response, error) {
+		<-ctx.Done()
+		return nil, ctx.Err()
+	}}
+	s := NewServer(tr, false)
+	s.SetRequestTimeout(30 * time.Millisecond)
+	RegisterAllTools(s)
+
+	for id := 1; id <= 2; id++ {
+		var outBuf bytes.Buffer
+		s.writer = &outBuf
+		params := json.RawMessage(`{"name":"bp_state","arguments":{}}`)
+		startedAt := time.Now()
+		s.handleRequest(context.Background(), &jsonRPCRequest{JSONRPC: "2.0", ID: id, Method: "tools/call", Params: params})
+		if elapsed := time.Since(startedAt); elapsed > 500*time.Millisecond {
+			t.Fatalf("第 %d 次工具呼叫未依獨立 timeout 返回，耗時 %v", id, elapsed)
+		}
+		envelope := decodeToolError(t, outBuf.Bytes())
+		if envelope.Error.Code != transport.ErrTimeoutError || !envelope.Error.Retryable {
+			t.Errorf("第 %d 次工具呼叫應回傳可重試 TimeoutError: %+v", id, envelope.Error)
+		}
+	}
+}
+
+func TestServerUnknownErrorDoesNotLeakSensitiveDetails(t *testing.T) {
+	s := NewServer(nil, false)
+	s.RegisterTool(&Tool{
+		Name:        "unsafe",
+		Description: "測試未知錯誤",
+		InputSchema: map[string]any{"type": "object"},
+		Handler: func(context.Context, json.RawMessage) (any, error) {
+			return nil, errors.New("stack trace /Volumes/private/project cookie=session-secret")
+		},
+	})
+
+	var outBuf bytes.Buffer
+	s.writer = &outBuf
+	params := json.RawMessage(`{"name":"unsafe","arguments":{}}`)
+	s.handleRequest(context.Background(), &jsonRPCRequest{JSONRPC: "2.0", ID: 12, Method: "tools/call", Params: params})
+
+	if strings.Contains(outBuf.String(), "Volumes") || strings.Contains(outBuf.String(), "session-secret") || strings.Contains(outBuf.String(), "stack trace") {
+		t.Fatalf("未知錯誤洩漏敏感細節: %s", outBuf.String())
+	}
+	envelope := decodeToolError(t, outBuf.Bytes())
+	if envelope.Error.Code != transport.ErrExtensionError || envelope.Error.Name != "ExtensionError" || envelope.Error.Retryable {
+		t.Errorf("未知錯誤映射不正確: %+v", envelope.Error)
+	}
+}
+
+func TestServerInvalidToolCallParamsUsesJSONRPCError(t *testing.T) {
+	s := NewServer(nil, false)
+	var outBuf bytes.Buffer
+	s.writer = &outBuf
+
+	s.handleRequest(context.Background(), &jsonRPCRequest{
+		JSONRPC: "2.0",
+		ID:      13,
+		Method:  "tools/call",
+		Params:  json.RawMessage(`{"name":`),
+	})
+
+	var response jsonRPCResponse
+	if err := json.Unmarshal(outBuf.Bytes(), &response); err != nil {
+		t.Fatalf("無法解析 MCP 回應: %v", err)
+	}
+	if response.Error == nil || response.Error.Code != transport.ErrInvalidParams || response.Result != nil {
+		t.Errorf("MCP 協議參數錯誤應使用 JSON-RPC error: %+v", response)
 	}
 }
 

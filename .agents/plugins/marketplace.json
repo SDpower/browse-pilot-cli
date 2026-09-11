@@ -1,0 +1,20 @@
+{
+  "name": "browse-pilot-marketplace",
+  "interface": {
+    "displayName": "Browse Pilot Marketplace"
+  },
+  "plugins": [
+    {
+      "name": "browse-pilot",
+      "source": {
+        "source": "local",
+        "path": "./plugins/browse-pilot"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"sync"
@@ -36,11 +37,9 @@ type WSTransport struct {
 	pending   map[string]chan *Response
 	pendingMu sync.Mutex
 
-	// done 用於通知 readLoop 停止
-	done chan struct{}
-
-	// newConn 用於通知 handleWS 有新連線就緒
-	newConn chan struct{}
+	// connReady 在 Extension 連線後關閉，用來喚醒所有等待中的 Send。
+	// 連線中斷後會替換成新的 channel，供下一次重連使用。
+	connReady chan struct{}
 }
 
 // NewWSTransport 建立一個新的 WSTransport 實例。
@@ -53,16 +52,14 @@ func NewWSTransport(cfg Config) *WSTransport {
 				return true
 			},
 		},
-		pending: make(map[string]chan *Response),
-		done:    make(chan struct{}),
-		newConn: make(chan struct{}, 1),
+		pending:   make(map[string]chan *Response),
+		connReady: make(chan struct{}),
 	}
 }
 
-// Start 啟動 WebSocket HTTP server，並等待 Extension 連入。
-// 若在 ctx 逾時前 Extension 成功連線則回傳 nil，
-// 逾時則回傳錯誤（但 server 仍持續運行，後續 Send 會再次等待連線）。
-func (t *WSTransport) Start(ctx context.Context) error {
+// Start 同步綁定監聽位址並啟動 WebSocket HTTP server。
+// 成功綁定後立即回傳，不等待 Extension 連入；若連接埠已被占用則直接失敗。
+func (t *WSTransport) Start(_ context.Context) error {
 	addr := fmt.Sprintf("127.0.0.1:%d", t.config.Port)
 
 	mux := http.NewServeMux()
@@ -73,32 +70,23 @@ func (t *WSTransport) Start(ctx context.Context) error {
 		Handler: mux,
 	}
 
-	// 在背景啟動 HTTP server
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		return fmt.Errorf("無法監聽 WebSocket 位址 %s: %w", addr, err)
+	}
+
+	// 綁定成功後才在背景服務，確保 Start 回傳 nil 時監聽已就緒。
 	go func() {
-		if err := t.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := t.server.Serve(listener); err != nil && err != http.ErrServerClosed {
 			// server 非預期關閉，記錄錯誤
 			_ = err
 		}
 	}()
 
-	// 等待 server 就緒
-	time.Sleep(10 * time.Millisecond)
-
 	if t.config.Verbose {
-		fmt.Fprintf(os.Stderr, "[WS] 等待 Extension 連線 ws://%s ...\n", addr)
+		fmt.Fprintf(os.Stderr, "[WS] 已監聽 ws://%s，等待 Extension 連線\n", addr)
 	}
-
-	// 等待 Extension 連入或 ctx 逾時
-	select {
-	case <-t.newConn:
-		if t.config.Verbose {
-			fmt.Fprintln(os.Stderr, "[WS] Extension 已連線")
-		}
-		return nil
-	case <-ctx.Done():
-		// 逾時不關閉 server，回傳提示（Send 會再等待）
-		return fmt.Errorf("等待 Extension 連線逾時（server 仍在 ws://%s 監聽中）", addr)
-	}
+	return nil
 }
 
 // handleWS 處理 WebSocket 升級請求。
@@ -111,55 +99,49 @@ func (t *WSTransport) handleWS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	t.connMu.Lock()
-	// 若已有舊連線，關閉它並清理 pending requests
+	// 換線期間阻止新的 Send 取得連線，並先讓舊連線的未完成請求失敗。
 	if t.conn != nil {
-		t.conn.Close()
+		_ = t.conn.Close()
+		t.failAllPending(&RPCError{
+			Code:    ErrConnectionError,
+			Message: "連線已被新 Extension 取代",
+			Data:    errorData(t.config),
+		})
 	}
 	t.conn = conn
 	t.connected = true
-	// 重置 done channel 供新的 readLoop 使用
-	t.done = make(chan struct{})
+	select {
+	case <-t.connReady:
+	default:
+		close(t.connReady)
+	}
 	t.connMu.Unlock()
 
-	// 清理所有因舊連線斷開而懸掛的 pending requests
-	t.failAllPending(&RPCError{
-		Code:    ErrConnectionError,
-		Message: "連線已被新 Extension 取代",
-	})
-
 	// 啟動讀取迴圈
-	go t.readLoop(conn, t.done)
-
-	// 通知有新連線（非阻塞）
-	select {
-	case t.newConn <- struct{}{}:
-	default:
-	}
+	go t.readLoop(conn)
 }
 
 // readLoop 持續讀取 WebSocket 訊息，將 Response 分派到對應的 pending channel。
 // 當連線關閉時，清理所有未完成的 pending requests。
-func (t *WSTransport) readLoop(conn *websocket.Conn, done chan struct{}) {
+func (t *WSTransport) readLoop(conn *websocket.Conn) {
 	defer func() {
 		t.connMu.Lock()
 		// 只有在 conn 仍是目前連線時才標記為斷線
-		if t.conn == conn {
+		isCurrent := t.conn == conn
+		if isCurrent {
 			t.connected = false
 			t.conn = nil
+			t.connReady = make(chan struct{})
 		}
 		t.connMu.Unlock()
 
-		// 通知所有 pending requests 連線已斷開
-		t.failAllPending(&RPCError{
-			Code:    ErrConnectionError,
-			Message: "WebSocket 連線已斷開",
-		})
-
-		// 關閉 done channel 通知外部迴圈結束
-		select {
-		case <-done:
-		default:
-			close(done)
+		if isCurrent {
+			// 僅目前連線斷開時清理請求，避免舊 readLoop 影響新連線。
+			t.failAllPending(&RPCError{
+				Code:    ErrConnectionError,
+				Message: "WebSocket 連線已斷開",
+				Data:    errorData(t.config),
+			})
 		}
 	}()
 
@@ -220,30 +202,34 @@ func (t *WSTransport) Send(ctx context.Context, req *Request) (*Response, error)
 	for {
 		t.connMu.Lock()
 		if t.connected && t.conn != nil {
-			break
+			conn := t.conn
+			t.connMu.Unlock()
+			// 建立回應 channel 並加入 pending map
+			ch := make(chan *Response, 1)
+			t.pendingMu.Lock()
+			t.pending[req.ID] = ch
+			t.pendingMu.Unlock()
+
+			return t.sendAndWait(ctx, conn, req, ch)
 		}
+		ready := t.connReady
 		t.connMu.Unlock()
 
-		// 等待新連線或逾時
+		// 等待新連線或逾時。
 		select {
-		case <-t.newConn:
-			continue
+		case <-ready:
+			break
 		case <-ctx.Done():
 			return nil, &RPCError{
 				Code:    ErrConnectionError,
-				Message: "等待 Extension 連線逾時",
+				Message: fmt.Sprintf("等待 %s Extension 連線逾時", browserName(t.config.Browser)),
+				Data:    errorData(t.config),
 			}
 		}
 	}
-	conn := t.conn
-	t.connMu.Unlock()
+}
 
-	// 建立回應 channel 並加入 pending map
-	ch := make(chan *Response, 1)
-	t.pendingMu.Lock()
-	t.pending[req.ID] = ch
-	t.pendingMu.Unlock()
-
+func (t *WSTransport) sendAndWait(ctx context.Context, conn *websocket.Conn, req *Request, ch chan *Response) (*Response, error) {
 	// 確保離開時清理 pending entry
 	defer func() {
 		t.pendingMu.Lock()
@@ -263,7 +249,8 @@ func (t *WSTransport) Send(ctx context.Context, req *Request) (*Response, error)
 	if writeErr != nil {
 		return nil, &RPCError{
 			Code:    ErrConnectionError,
-			Message: fmt.Sprintf("發送訊息失敗: %v", writeErr),
+			Message: "無法傳送訊息至 Extension",
+			Data:    errorData(t.config),
 		}
 	}
 
@@ -272,7 +259,11 @@ func (t *WSTransport) Send(ctx context.Context, req *Request) (*Response, error)
 	case resp := <-ch:
 		return resp, nil
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, &RPCError{
+			Code:    ErrTimeoutError,
+			Message: "等待 Extension 回應逾時",
+			Data:    errorData(t.config),
+		}
 	}
 }
 
@@ -290,6 +281,7 @@ func (t *WSTransport) Close() error {
 	t.failAllPending(&RPCError{
 		Code:    ErrConnectionError,
 		Message: "Transport 已關閉",
+		Data:    errorData(t.config),
 	})
 
 	if t.server != nil {
@@ -310,4 +302,17 @@ func (t *WSTransport) IsConnected() bool {
 // Type 回傳 transport 的類型識別字串。
 func (t *WSTransport) Type() string {
 	return "websocket"
+}
+
+func browserName(browser string) string {
+	switch browser {
+	case "firefox":
+		return "Firefox"
+	case "chrome":
+		return "Chrome"
+	case "edge":
+		return "Edge"
+	default:
+		return "瀏覽器"
+	}
 }

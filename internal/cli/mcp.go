@@ -32,6 +32,7 @@ func runMCPServer() error {
 	if browser == "auto" {
 		browser = transport.AutoDetectBrowser()
 	}
+	cfg.Browser = browser
 
 	var tr transport.Transport
 	switch browser {
@@ -47,16 +48,11 @@ func runMCPServer() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// MCP 模式下，transport Start 不應阻塞等待 Extension 連入。
-	// 先啟動 WS server，讓 MCP server 回應 initialize，
-	// Extension 隨後連入，tool call 時 Send() 會自動等待連線。
-	startCtx, startCancel := context.WithTimeout(ctx, 500*time.Millisecond)
-	if err := tr.Start(startCtx); err != nil {
-		if flagVerbose {
-			fmt.Fprintf(os.Stderr, "[MCP] WS server 已啟動，等待 Extension 連入\n")
-		}
+	// Start 只負責同步建立 transport；WebSocket 不等待 Extension 連入。
+	// 因此 MCP 可立即完成 initialize，但連接埠占用等啟動錯誤仍會直接回傳。
+	if err := tr.Start(ctx); err != nil {
+		return err
 	}
-	startCancel()
 	defer tr.Close()
 
 	if flagVerbose {
@@ -65,6 +61,8 @@ func runMCPServer() error {
 
 	// 建立 MCP server 並註冊所有 tool 與 resource
 	server := mcp.NewServer(tr, flagVerbose)
+	server.SetRequestTimeout(cfg.Timeout)
+	server.SetBrowserContext(browser, flagPort)
 	mcp.RegisterAllTools(server)
 	mcp.RegisterAllResources(server)
 

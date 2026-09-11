@@ -173,7 +173,7 @@ func RegisterAllTools(s *Server) {
 				Timeout int    `json:"timeout"`
 			}
 			if err := json.Unmarshal(params, &p); err != nil {
-				return nil, fmt.Errorf("解析 bp_wait 參數失敗: %w", err)
+				return nil, invalidParamsError("bp_wait 參數格式無效")
 			}
 
 			// 根據等待類型選擇方法名稱
@@ -215,7 +215,7 @@ func RegisterAllTools(s *Server) {
 				Selector string `json:"selector"`
 			}
 			if err := json.Unmarshal(params, &p); err != nil {
-				return nil, fmt.Errorf("解析 bp_get 參數失敗: %w", err)
+				return nil, invalidParamsError("bp_get 參數格式無效")
 			}
 
 			method := "get_" + p.What
@@ -252,7 +252,7 @@ func RegisterAllTools(s *Server) {
 				Action string `json:"action"`
 			}
 			if err := json.Unmarshal(params, &p); err != nil {
-				return nil, fmt.Errorf("解析 bp_cookies 參數失敗: %w", err)
+				return nil, invalidParamsError("bp_cookies 參數格式無效")
 			}
 
 			var method string
@@ -264,7 +264,7 @@ func RegisterAllTools(s *Server) {
 			case "clear":
 				method = "clear_cookies"
 			default:
-				return nil, fmt.Errorf("未知的 cookie action: %s", p.Action)
+				return nil, invalidParamsError("bp_cookies action 無效")
 			}
 			return s.callExtensionRaw(ctx, method, params)
 		},
@@ -288,7 +288,7 @@ func RegisterAllTools(s *Server) {
 				Index  *int   `json:"index"`
 			}
 			if err := json.Unmarshal(params, &p); err != nil {
-				return nil, fmt.Errorf("解析 bp_tabs 參數失敗: %w", err)
+				return nil, invalidParamsError("bp_tabs 參數格式無效")
 			}
 
 			var method string
@@ -300,7 +300,7 @@ func RegisterAllTools(s *Server) {
 			case "close":
 				method = "close_tab"
 			default:
-				return nil, fmt.Errorf("未知的 tab action: %s", p.Action)
+				return nil, invalidParamsError("bp_tabs action 無效")
 			}
 			extParams := map[string]any{}
 			if p.Index != nil {
@@ -374,8 +374,11 @@ func RegisterAllTools(s *Server) {
 // 避免 transport.NewRequest 造成的雙重序列化問題。
 // 若 params 為 nil，則不帶參數傳送。
 func (s *Server) callExtensionRaw(ctx context.Context, method string, params json.RawMessage) (any, error) {
-	if s.transport == nil || !s.transport.IsConnected() {
-		return nil, fmt.Errorf("extension 未連線")
+	if s.transport == nil {
+		return nil, &transport.RPCError{
+			Code:    transport.ErrConnectionError,
+			Message: "Extension transport 未設定",
+		}
 	}
 
 	id := generateID()
@@ -393,7 +396,7 @@ func (s *Server) callExtensionRaw(ctx context.Context, method string, params jso
 	}
 
 	if resp.IsError() {
-		return nil, fmt.Errorf("%s", resp.Error.Message)
+		return nil, resp.Error
 	}
 
 	var result any

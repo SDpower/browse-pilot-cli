@@ -3,10 +3,11 @@
  * Content script 無法存取 cookies API，須由 background 代理
  */
 
-// 相容 Firefox（browser）和 Chrome/Edge（chrome）
-const api = typeof browser !== 'undefined' ? browser : chrome;
+const CookiesHandler = (() => {
+  // 將瀏覽器 API 留在 handler 私有作用域，避免背景腳本共用全域名稱衝突。
+  const api = typeof browser !== 'undefined' ? browser : chrome;
 
-const CookiesHandler = {
+  return {
   /**
    * 取得 Cookie 清單
    * @param {{ url?: string }} params
@@ -62,4 +63,5 @@ const CookiesHandler = {
 
     return { success: true, count: cookies.length };
   },
-};
+  };
+})();

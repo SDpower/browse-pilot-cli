@@ -119,6 +119,7 @@ func (t *NMTransport) readLoop() {
 		t.failAllPending(&RPCError{
 			Code:    ErrNativeMessagingError,
 			Message: "Native Messaging stdin 已關閉",
+			Data:    errorData(t.config),
 		})
 
 		// 關閉 done channel
@@ -187,6 +188,7 @@ func (t *NMTransport) Send(ctx context.Context, req *Request) (*Response, error)
 		return nil, &RPCError{
 			Code:    ErrNativeMessagingError,
 			Message: "Native Messaging transport 尚未啟動",
+			Data:    errorData(t.config),
 		}
 	}
 	t.connMu.Unlock()
@@ -214,7 +216,8 @@ func (t *NMTransport) Send(ctx context.Context, req *Request) (*Response, error)
 	if err := t.writeMessage(data); err != nil {
 		return nil, &RPCError{
 			Code:    ErrNativeMessagingError,
-			Message: fmt.Sprintf("發送訊息失敗: %v", err),
+			Message: "無法傳送 Native Messaging 訊息",
+			Data:    errorData(t.config),
 		}
 	}
 
@@ -223,7 +226,11 @@ func (t *NMTransport) Send(ctx context.Context, req *Request) (*Response, error)
 	case resp := <-ch:
 		return resp, nil
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, &RPCError{
+			Code:    ErrTimeoutError,
+			Message: "等待 Extension 回應逾時",
+			Data:    errorData(t.config),
+		}
 	}
 }
 
@@ -237,6 +244,7 @@ func (t *NMTransport) Close() error {
 	t.failAllPending(&RPCError{
 		Code:    ErrNativeMessagingError,
 		Message: "Native Messaging transport 已關閉",
+		Data:    errorData(t.config),
 	})
 
 	// 嘗試關閉 done channel

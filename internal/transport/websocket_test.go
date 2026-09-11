@@ -33,17 +33,9 @@ func dialTestWS(t *testing.T, port int) *websocket.Conn {
 	return nil
 }
 
-// startWithClient 在背景 goroutine 中啟動 client 連線，確保 Start 不會因等待連線而卡住
+// startWithClient 啟動 server 後建立測試 client 連線。
 func startWithClient(t *testing.T, tr *WSTransport, port int) *websocket.Conn {
 	t.Helper()
-	var conn *websocket.Conn
-
-	// 在背景啟動 client 連線（Start 會等待連入）
-	done := make(chan struct{})
-	go func() {
-		conn = dialTestWS(t, port)
-		close(done)
-	}()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -52,8 +44,7 @@ func startWithClient(t *testing.T, tr *WSTransport, port int) *websocket.Conn {
 		t.Fatalf("Start() 失敗: %v", err)
 	}
 
-	<-done
-	return conn
+	return dialTestWS(t, port)
 }
 
 // TestWSTransportStartAndConnect 驗證 WSTransport 可啟動並接受連線
@@ -213,6 +204,53 @@ func TestWSTransportReconnect(t *testing.T) {
 	}
 }
 
+// TestWSTransportDisconnectFailsPending 驗證連線中斷會讓未完成請求立即失敗。
+func TestWSTransportDisconnectFailsPending(t *testing.T) {
+	cfg := Config{Browser: "firefox", Port: 19231, Timeout: 5 * time.Second}
+	tr := NewWSTransport(cfg)
+	conn := startWithClient(t, tr, 19231)
+	defer tr.Close()
+
+	requestRead := make(chan struct{})
+	go func() {
+		if _, _, err := conn.ReadMessage(); err == nil {
+			close(requestRead)
+		}
+	}()
+
+	type sendResult struct {
+		response *Response
+		err      error
+	}
+	result := make(chan sendResult, 1)
+	go func() {
+		req, _ := NewRequest("get_state", nil)
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		response, err := tr.Send(ctx, req)
+		result <- sendResult{response: response, err: err}
+	}()
+
+	select {
+	case <-requestRead:
+	case <-time.After(time.Second):
+		t.Fatal("Extension 未收到測試請求")
+	}
+	conn.Close()
+
+	select {
+	case result := <-result:
+		if result.err != nil {
+			t.Fatalf("斷線錯誤應由 RPC response 回傳，實際為 %v", result.err)
+		}
+		if result.response == nil || result.response.Error == nil || result.response.Error.Code != ErrConnectionError {
+			t.Fatalf("斷線應回傳 ConnectionError，實際為 %+v", result.response)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("連線中斷後未完成請求仍懸掛")
+	}
+}
+
 // TestWSTransportHTTPUpgrade 驗證非 WebSocket 請求的 HTTP 處理
 func TestWSTransportHTTPUpgrade(t *testing.T) {
 	cfg := Config{Port: 19227, Timeout: 5 * time.Second}
@@ -236,48 +274,39 @@ func TestWSTransportHTTPUpgrade(t *testing.T) {
 	}
 }
 
-// TestWSTransportStartWaitsForConnection 驗證 Start 會等待 Extension 連入
-func TestWSTransportStartWaitsForConnection(t *testing.T) {
+// TestWSTransportStartDoesNotWaitForConnection 驗證 Start 綁定成功後不等待 Extension。
+func TestWSTransportStartDoesNotWaitForConnection(t *testing.T) {
 	cfg := Config{Port: 19228, Timeout: 5 * time.Second}
 	tr := NewWSTransport(cfg)
-
-	startDone := make(chan error, 1)
-
-	// Start 在背景執行（會阻塞等待連線）
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-		defer cancel()
-		startDone <- tr.Start(ctx)
-	}()
-
-	// 等一下再連線，模擬 Extension 延遲連入
-	time.Sleep(200 * time.Millisecond)
-	conn := dialTestWS(t, 19228)
-	defer conn.Close()
 	defer tr.Close()
 
-	// Start 應該在連線後回傳 nil
-	err := <-startDone
-	if err != nil {
-		t.Fatalf("Start() 應在連線後成功，但回傳: %v", err)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	startedAt := time.Now()
+	if err := tr.Start(ctx); err != nil {
+		t.Fatalf("Start() 失敗: %v", err)
 	}
-	if !tr.IsConnected() {
-		t.Error("IsConnected() 應為 true")
+	if elapsed := time.Since(startedAt); elapsed > 200*time.Millisecond {
+		t.Errorf("Start() 不應等待 Extension，耗時 %v", elapsed)
+	}
+	if tr.IsConnected() {
+		t.Error("尚未連入 Extension 時 IsConnected() 應為 false")
 	}
 }
 
-// TestWSTransportStartTimeout 驗證 Start 在無連線時正確逾時
-func TestWSTransportStartTimeout(t *testing.T) {
-	cfg := Config{Port: 19229, Timeout: 5 * time.Second}
-	tr := NewWSTransport(cfg)
-	defer tr.Close()
+// TestWSTransportStartPortInUse 驗證連接埠占用會同步回傳啟動失敗。
+func TestWSTransportStartPortInUse(t *testing.T) {
+	first := NewWSTransport(Config{Port: 19229, Timeout: 5 * time.Second})
+	if err := first.Start(context.Background()); err != nil {
+		t.Fatalf("第一個 transport 啟動失敗: %v", err)
+	}
+	defer first.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
-	defer cancel()
-
-	err := tr.Start(ctx)
+	second := NewWSTransport(Config{Port: 19229, Timeout: 5 * time.Second})
+	err := second.Start(context.Background())
 	if err == nil {
-		t.Fatal("無連線時 Start() 應逾時回傳錯誤")
+		second.Close()
+		t.Fatal("連接埠已占用時 Start() 應回傳錯誤")
 	}
 }
 

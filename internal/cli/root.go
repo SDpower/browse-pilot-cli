@@ -14,6 +14,8 @@ import (
 	"github.com/SDpower/browse-pilot-cli/internal/transport"
 )
 
+const cliVersion = "0.1.4"
+
 // 全域 flag 變數
 var (
 	// flagBrowser 指定目標瀏覽器，支援 firefox/chrome/edge/auto
@@ -36,7 +38,8 @@ var (
 
 // rootCmd 是 bp_cli 指令的根節點
 var rootCmd = &cobra.Command{
-	Use: "bp_cli",
+	Use:     "bp_cli",
+	Version: cliVersion,
 	// 根指令依 flag 選擇啟動模式，否則顯示說明
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if flagNativeMessaging {
@@ -178,6 +181,7 @@ func getTransport() (transport.Transport, error) {
 	if browser == "auto" {
 		browser = transport.AutoDetectBrowser()
 	}
+	cfg.Browser = browser
 
 	var tr transport.Transport
 	switch browser {
@@ -189,15 +193,8 @@ func getTransport() (transport.Transport, error) {
 		return nil, fmt.Errorf(i18n.T("error.unsupported_browser"), browser)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout)
-	defer cancel()
-
-	if err := tr.Start(ctx); err != nil {
-		// WebSocket 模式下 Start 逾時表示 Extension 尚未連入，
-		// 但 server 仍在運行，Send 時會再次等待連線
-		if flagVerbose {
-			fmt.Fprintf(os.Stderr, "[transport] %v\n", err)
-		}
+	if err := tr.Start(context.Background()); err != nil {
+		return nil, err
 	}
 	return tr, nil
 }

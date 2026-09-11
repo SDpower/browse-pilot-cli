@@ -2,10 +2,11 @@
  * 分頁管理 handler（在 background script 中執行）
  */
 
-// 相容 Firefox（browser）和 Chrome/Edge（chrome）
-const api = typeof browser !== 'undefined' ? browser : chrome;
+const TabsHandler = (() => {
+  // 將瀏覽器 API 留在 handler 私有作用域，避免背景腳本共用全域名稱衝突。
+  const api = typeof browser !== 'undefined' ? browser : chrome;
 
-const TabsHandler = {
+  return {
   /**
    * 取得所有分頁清單
    * @returns {Promise<{ tabs: Array }>}
@@ -60,4 +61,5 @@ const TabsHandler = {
     return { success: true };
   },
 
-};
+  };
+})();

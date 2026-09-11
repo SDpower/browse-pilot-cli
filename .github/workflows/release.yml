@@ -53,6 +53,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Build
         run: bash scripts/build-extensions.sh
 
@@ -79,6 +83,9 @@ jobs:
         with:
           merge-multiple: true
 
+      - name: Generate checksums
+        run: sha256sum bp_cli-* browse-pilot-extension-*.tar.gz > checksums.txt
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
@@ -86,3 +93,4 @@ jobs:
           files: |
             bp_cli-*
             browse-pilot-extension-*.tar.gz
+            checksums.txt

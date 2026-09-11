@@ -196,9 +196,9 @@ Python Session 適合需要迴圈處理或複雜邏輯的自動化場景。
 
 ---
 
-## Claude Code MCP 操作流程
+## Codex MCP 操作流程
 
-以下為 Claude Code 透過 MCP 操作瀏覽器的完整流程範例。
+以下為 Codex 透過 MCP 操作瀏覽器的完整流程範例。
 
 ### 前置條件
 
@@ -207,28 +207,17 @@ Python Session 適合需要迴圈處理或複雜邏輯的自動化場景。
 
 ### 設定（一次性）
 
-在 `mcp.json` 加入：
+使用 Codex CLI 加入：
 
-```json
-{
-  "mcpServers": {
-    "browse-pilot": {
-      "command": "bp_cli",
-      "args": ["--mcp"],
-      "env": {
-        "BP_BROWSER": "firefox",
-        "BP_PORT": "9222"
-      }
-    }
-  }
-}
+```bash
+codex mcp add browse-pilot -- bp_cli --mcp --browser firefox --port 9222 --timeout 60000
 ```
 
-Claude Code 啟動 MCP 時，`bp_cli --mcp` 會先啟動 WS server 並回應 MCP 協議握手，Extension 隨後自動連入。Tool 呼叫時若 Extension 尚未連入，會自動等待（最多 30 秒）。
+Codex 啟動 MCP 時，`bp_cli --mcp --browser firefox --port 9222 --timeout 60000` 會先啟動 WS server 並回應 MCP 協議握手，Extension 隨後自動連入。Tool 呼叫時若 Extension 尚未連入，會自動等待（最多 60 秒）。
 
 ### 操作範例：自動登入並抓取資料
 
-在 Claude Code 中：
+在 Codex 中：
 
 ```
 請幫我：
@@ -240,11 +229,11 @@ Claude Code 啟動 MCP 時，`bp_cli --mcp` 會先啟動 WS server 並回應 MCP
 6. 截圖儲存為 dashboard.png
 ```
 
-Claude Code 將依序呼叫：
+Codex 將依序呼叫：
 
 ```
-navigate → get_state → input_text(email) → input_text(password)
-→ click(submit) → wait_url(*/dashboard*) → screenshot
+bp_navigate → bp_state → bp_input(email) → bp_input(password)
+→ bp_click(submit) → bp_wait(url=*/dashboard*) → bp_screenshot
 ```
 
 ### 操作範例：資料擷取後處理
@@ -256,13 +245,13 @@ navigate → get_state → input_text(email) → input_text(password)
 以表格方式整理後回傳給我。
 ```
 
-Claude Code 會：
+Codex 會：
 
-1. 呼叫 `navigate` 開啟頁面
-2. 呼叫 `get_state` 找到搜尋欄位
+1. 呼叫 `bp_navigate` 開啟頁面
+2. 呼叫 `bp_state` 找到搜尋欄位
 3. 填入資料並送出
-4. 呼叫 `wait_selector` 等待結果
-5. 呼叫 `eval_js` 擷取表格資料
+4. 呼叫 `bp_wait` 等待結果
+5. 呼叫 `bp_eval` 擷取表格資料
 6. 整理成易讀格式回傳
 
 ---

@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.1.4] - 2026-09-11
+
+### Added
+
+- **Codex Plugin**: install Browse Pilot Skill and automatically start the Firefox MCP server with a 60-second tool timeout
+- **Codex guides**: independent Traditional Chinese and English installation, usage, update, and troubleshooting documentation
+- **CLI version**: `bp_cli --version` reports the installed release version
+
+### Changed
+
+- **MCP lifecycle**: initialize before the Extension connects, wait per tool call, and allow reconnection after disconnects
+- **MCP errors**: return structured, actionable tool errors with retry guidance while preserving known Extension RPC details
+- **Release assets**: publish SHA-256 checksums for all CLI and Extension downloads
+
+### Fixed
+
+- **Extension background handlers**: isolate shared browser API bindings to prevent `Handler is not defined` and duplicate declaration failures
+- **WebSocket startup**: synchronously detect port binding failures instead of silently continuing
+
 ## [0.1.3] - 2026-03-23
 
 ### Added
@@ -55,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Documentation**: README (English + 繁體中文), 6 docs (INSTALL, COMMANDS, PROTOCOL, BROWSERS, MCP, EXAMPLES)
 - **SKILL.md**: Claude Code skill reference for MCP integration
 
+[0.1.4]: https://github.com/SDpower/browse-pilot-cli/releases/tag/v0.1.4
 [0.1.3]: https://github.com/SDpower/browse-pilot-cli/releases/tag/v0.1.3
 [0.1.2]: https://github.com/SDpower/browse-pilot-cli/releases/tag/v0.1.2
 [0.1.1]: https://github.com/SDpower/browse-pilot-cli/releases/tag/v0.1.1

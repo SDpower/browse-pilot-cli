@@ -11,7 +11,7 @@ import (
 // 使上層指令邏輯無需關心底層通訊方式。
 type Transport interface {
 	// Start 啟動 transport。
-	// WebSocket 模式：啟動 HTTP server 並等待 Extension 連線。
+	// WebSocket 模式：同步綁定監聽位址後啟動 HTTP server，不等待 Extension 連線。
 	// Native Messaging 模式：啟動 stdin/stdout 監聽迴圈。
 	Start(ctx context.Context) error
 
@@ -32,6 +32,9 @@ type Transport interface {
 
 // Config 是建立 Transport 時的共用設定結構。
 type Config struct {
+	// Browser 是目標瀏覽器名稱，用於產生可操作的錯誤資訊
+	Browser string
+
 	// Port 是 WebSocket 伺服器的監聽埠號（僅 WebSocket 模式使用）
 	Port int
 

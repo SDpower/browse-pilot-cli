@@ -1,10 +1,11 @@
 {
   "name": "browse-pilot-cli",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "description": "跨瀏覽器自動化 CLI — WebExtension 部分",
   "private": true,
   "scripts": {
-    "lint": "eslint extension/"
+    "lint": "eslint extension/ scripts/check-background-scope.mjs",
+    "check:background": "node scripts/check-background-scope.mjs"
   },
   "devDependencies": {
     "eslint": "^8.57.1"
