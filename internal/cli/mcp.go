@@ -1,9 +1,12 @@
-// Package cli 定義 bp CLI 的所有 Cobra 指令
+// Package cli 定義 bp CLI 的所有 Cobra 指令。
 package cli
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,71 +16,81 @@ import (
 	"github.com/SDpower/browse-pilot-cli/internal/transport"
 )
 
-// runMCPServer 以 MCP server 模式啟動。
-// MCP 透過 stdio (stdin/stdout) 與 Claude Code 溝通，
-// 同時需要建立 transport 連線至瀏覽器 Extension。
-func runMCPServer() error {
-	if flagVerbose {
-		fmt.Fprintln(os.Stderr, "[MCP] 啟動 MCP server 模式")
-	}
-
-	// 建立 transport 連線至 Extension
-	cfg := transport.Config{
-		Port:    flagPort,
-		Timeout: time.Duration(flagTimeout) * time.Millisecond,
-		Verbose: flagVerbose,
-	}
-
+// runMCPHTTPServer 啟動單一共用的 Streamable HTTP MCP server。
+func runMCPHTTPServer() error {
 	browser := flagBrowser
 	if browser == "auto" {
 		browser = transport.AutoDetectBrowser()
 	}
-	cfg.Browser = browser
-
-	var tr transport.Transport
-	switch browser {
-	case "firefox":
-		tr = transport.NewWSTransport(cfg)
-	case "chrome", "edge":
-		tr = transport.NewNMTransport(cfg)
-	default:
-		return fmt.Errorf("不支援的瀏覽器: %s", browser)
+	if browser != "firefox" {
+		return fmt.Errorf("Streamable HTTP MCP 目前僅支援 Firefox，實際為 %s", browser)
+	}
+	if flagMCPPort < 1 || flagMCPPort > 65535 {
+		return fmt.Errorf("無效的 MCP HTTP 埠號: %d", flagMCPPort)
 	}
 
-	// 建立帶取消功能的 context
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	mcpAddress := fmt.Sprintf("127.0.0.1:%d", flagMCPPort)
+	listener, err := net.Listen("tcp", mcpAddress)
+	if err != nil {
+		return fmt.Errorf("無法監聽 MCP HTTP 位址 %s: %w", mcpAddress, err)
+	}
+	defer listener.Close()
 
-	// Start 只負責同步建立 transport；WebSocket 不等待 Extension 連入。
-	// 因此 MCP 可立即完成 initialize，但連接埠占用等啟動錯誤仍會直接回傳。
+	cfg := transport.Config{
+		Browser: browser,
+		Port:    flagPort,
+		Timeout: time.Duration(flagTimeout) * time.Millisecond,
+		Verbose: flagVerbose,
+	}
+	tr := transport.NewWSTransport(cfg)
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 	if err := tr.Start(ctx); err != nil {
 		return err
 	}
 	defer tr.Close()
 
-	if flagVerbose {
-		fmt.Fprintf(os.Stderr, "[MCP] 使用 %s transport（瀏覽器: %s）\n", tr.Type(), browser)
-	}
-
-	// 建立 MCP server 並註冊所有 tool 與 resource
 	server := mcp.NewServer(tr, flagVerbose)
 	server.SetRequestTimeout(cfg.Timeout)
 	server.SetBrowserContext(browser, flagPort)
 	mcp.RegisterAllTools(server)
 	mcp.RegisterAllResources(server)
 
-	// 處理 SIGINT/SIGTERM，確保優雅關閉
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	mux := http.NewServeMux()
+	mux.Handle("/mcp", server.HTTPHandler())
+	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"ok": true, "extensionConnected": tr.IsConnected(), "browser": browser,
+		})
+	})
+	httpServer := &http.Server{
+		Addr:              mcpAddress,
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
 
+	if flagVerbose {
+		fmt.Fprintf(os.Stderr, "[MCP] Streamable HTTP 已監聽 http://%s/mcp\n", mcpAddress)
+	}
+
+	serveErr := make(chan error, 1)
 	go func() {
-		<-sigCh
-		if flagVerbose {
-			fmt.Fprintln(os.Stderr, "[MCP] 收到終止信號，關閉中...")
-		}
-		cancel()
+		serveErr <- httpServer.Serve(listener)
 	}()
 
-	// 啟動 MCP server 主迴圈（阻塞直到 ctx 取消或 stdin 關閉）
-	return server.Run(ctx)
+	select {
+	case <-ctx.Done():
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		if err := httpServer.Shutdown(shutdownCtx); err != nil {
+			return fmt.Errorf("關閉 MCP HTTP server 失敗: %w", err)
+		}
+		return nil
+	case err := <-serveErr:
+		if err == nil || err == http.ErrServerClosed {
+			return nil
+		}
+		return fmt.Errorf("MCP HTTP server 失敗: %w", err)
+	}
 }

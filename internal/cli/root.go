@@ -14,7 +14,7 @@ import (
 	"github.com/SDpower/browse-pilot-cli/internal/transport"
 )
 
-const cliVersion = "0.1.4"
+const cliVersion = "0.2.0"
 
 // 全域 flag 變數
 var (
@@ -28,8 +28,10 @@ var (
 	flagTimeout int
 	// flagVerbose 是否啟用詳細日誌輸出
 	flagVerbose bool
-	// flagMCP 是否以 MCP server 模式啟動
-	flagMCP bool
+	// flagMCPHTTP 是否啟動 Streamable HTTP MCP server
+	flagMCPHTTP bool
+	// flagMCPPort 是 Streamable HTTP MCP server 的 loopback 埠號
+	flagMCPPort int
 	// flagNativeMessaging 是否以 Native Messaging host 模式啟動
 	flagNativeMessaging bool
 	// flagSession 連線 session 名稱，預設 "default"
@@ -45,8 +47,8 @@ var rootCmd = &cobra.Command{
 		if flagNativeMessaging {
 			return runNativeMessagingHost()
 		}
-		if flagMCP {
-			return runMCPServer()
+		if flagMCPHTTP {
+			return runMCPHTTPServer()
 		}
 		return cmd.Help()
 	},
@@ -105,12 +107,19 @@ func init() {
 		i18n.T("flag.verbose"),
 	)
 
-	// MCP server 模式 flag
+	// Streamable HTTP MCP server 模式 flag
 	rootCmd.PersistentFlags().BoolVar(
-		&flagMCP,
-		"mcp",
+		&flagMCPHTTP,
+		"mcp-http",
 		false,
 		i18n.T("flag.mcp"),
+	)
+
+	rootCmd.PersistentFlags().IntVar(
+		&flagMCPPort,
+		"mcp-port",
+		8931,
+		"Streamable HTTP MCP server 埠號",
 	)
 
 	// Native Messaging host 模式 flag
@@ -155,9 +164,14 @@ func GetVerbose() bool {
 	return flagVerbose
 }
 
-// GetMCP 取得 --mcp flag 的值
-func GetMCP() bool {
-	return flagMCP
+// GetMCPHTTP 取得 --mcp-http flag 的值。
+func GetMCPHTTP() bool {
+	return flagMCPHTTP
+}
+
+// GetMCPPort 取得 --mcp-port flag 的值。
+func GetMCPPort() int {
+	return flagMCPPort
 }
 
 // GetNativeMessaging 取得 --native-messaging flag 的值

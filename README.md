@@ -1,6 +1,6 @@
 # browse-pilot-cli (bp)
 
-[![Version](https://img.shields.io/badge/version-0.1.4-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 Cross-browser automation CLI that controls Firefox, Chrome, and Edge via WebExtension API — no CDP required.
@@ -29,7 +29,7 @@ codex plugin marketplace add SDpower/browse-pilot-cli
 codex plugin add browse-pilot@browse-pilot-marketplace
 ```
 
-The plugin loads the Browse Pilot Skill and local STDIO MCP server. Start a new Codex session after installation.
+The plugin loads the Browse Pilot Skill and connects to the shared local Streamable HTTP MCP server. Start that service once, then open a new Codex session after installation.
 
 ### Manual Installation
 
@@ -163,7 +163,8 @@ bp_cli python --reset
 | `--json` | JSON output format | false |
 | `--timeout` | Timeout in milliseconds | 30000 |
 | `--verbose` | Verbose logging | false |
-| `--mcp` | Run as MCP server | false |
+| `--mcp-http` | Run the Streamable HTTP MCP server | false |
+| `--mcp-port` | Streamable HTTP MCP port | 8931 |
 | `--session` | Session name | default |
 | `--native-messaging` | Run as NM host | false |
 
@@ -263,10 +264,11 @@ All wait commands support `--timeout <ms>` (default 30000).
 
 ### Configuration
 
-Without the plugin, add the server directly to Codex:
+Start the shared local server once, then add its URL to Codex:
 
 ```bash
-codex mcp add browse-pilot -- bp_cli --mcp --browser firefox --port 9222 --timeout 60000
+bp_cli --mcp-http --browser firefox --port 9222 --mcp-port 8931 --timeout 60000
+codex mcp add browse-pilot --url http://127.0.0.1:8931/mcp
 ```
 
 ### Available MCP Tools
@@ -297,11 +299,10 @@ codex mcp add browse-pilot -- bp_cli --mcp --browser firefox --port 9222 --timeo
 
 ```
 Codex / ChatGPT Desktop / AI Agent
-    │ MCP protocol (stdio)
+    │ Streamable HTTP MCP (127.0.0.1:8931/mcp)
     ▼
 browse-pilot-cli (Go binary)
-    ├── WebSocket Server ──→ Firefox Extension (MV2, persistent background)
-    └── Native Messaging ──→ Chrome/Edge Extension (MV3, service worker)
+    └── WebSocket Server ──→ Firefox Extension (MV2, persistent background)
                                     │
                                     ▼
                               Content Script → Target Web Page

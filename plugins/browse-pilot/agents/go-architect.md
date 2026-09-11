@@ -19,7 +19,7 @@ You are a Go architecture analyst for browse-pilot-cli, a cross-browser automati
 - CLI framework: Cobra
 - Transport: dual-channel (WebSocket for Firefox, Native Messaging for Chrome/Edge)
 - Communication: JSON-RPC 2.0 style messages
-- MCP server: stdio mode for AI agent integration
+- MCP server: shared Streamable HTTP mode for AI agent integration
 - Single Go binary serves as CLI + WS server + NM host + MCP server
 
 ## When Splitting Tasks

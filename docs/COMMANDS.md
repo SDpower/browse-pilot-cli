@@ -11,7 +11,8 @@
 | `--json` | false | 以 JSON 格式輸出結果 |
 | `--timeout` | `30s` | 指令逾時時間 |
 | `--verbose` | false | 顯示詳細的通訊紀錄 |
-| `--mcp` | false | 以 MCP Server 模式啟動（stdio） |
+| `--mcp-http` | false | 啟動 Streamable HTTP MCP Server |
+| `--mcp-port` | `8931` | Streamable HTTP MCP Server 埠號 |
 
 ---
 

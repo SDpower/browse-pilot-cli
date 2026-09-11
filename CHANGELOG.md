@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-09-11
+
+### Breaking Changes
+
+- **MCP transport**：移除每個 client 各自啟動的 stdio `--mcp` 模式，改以單一 `bp_cli --mcp-http` Streamable HTTP 服務供多個 Codex 工作階段共用
+- **Plugin lifecycle**：Codex Plugin 改為連線至 `http://127.0.0.1:8931/mcp`；使用者必須先啟動共用服務，Plugin 不再自動啟動 `bp_cli`
+
+### Added
+
+- **HTTP MCP server**：新增 `--mcp-http`、`--mcp-port` 與 `/healthz`，支援多個 client 並行連線與無 Extension 時先完成 MCP 初始化
+- **Codex Skill**：新增共用服務、Firefox Extension、工具錯誤重試與唯讀工具的操作規則
+- **Codex guides**：補充繁體中文與英文的 HTTP MCP 安裝、更新、移轉與疑難排解說明
+
+### Changed
+
+- **MCP SDK**：改用官方 Go MCP SDK 實作 Streamable HTTP transport、工具與 resources
+- **Tool annotations**：將 `bp_state`、`bp_get`、`bp_screenshot` 與 `bp_wait` 標示為唯讀工具
+- **Error handling**：每次工具呼叫使用獨立 timeout，並以結構化、安全且可操作的錯誤資訊回傳 Extension 失敗
+
+### Fixed
+
+- **Multiple Codex sessions**：避免每個工作階段重複占用 Firefox WebSocket port `9222` 而導致 MCP 初始化失敗
+- **Extension reconnect**：Extension 斷線時結束未完成請求，重新連線後可由後續工具呼叫繼續操作
+
 ## [0.1.4] - 2026-09-11
 
 ### Added
@@ -74,6 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Documentation**: README (English + 繁體中文), 6 docs (INSTALL, COMMANDS, PROTOCOL, BROWSERS, MCP, EXAMPLES)
 - **SKILL.md**: Claude Code skill reference for MCP integration
 
+[0.2.0]: https://github.com/SDpower/browse-pilot-cli/releases/tag/v0.2.0
 [0.1.4]: https://github.com/SDpower/browse-pilot-cli/releases/tag/v0.1.4
 [0.1.3]: https://github.com/SDpower/browse-pilot-cli/releases/tag/v0.1.3
 [0.1.2]: https://github.com/SDpower/browse-pilot-cli/releases/tag/v0.1.2

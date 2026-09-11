@@ -202,18 +202,19 @@ Python Session 適合需要迴圈處理或複雜邏輯的自動化場景。
 
 ### 前置條件
 
-1. 在瀏覽器中載入 Browse Pilot Extension（見 [安裝指南](INSTALL.md)）
-2. Extension 載入後會自動嘗試連入 CLI 的 WebSocket server
+1. 在 Firefox 載入 Browse Pilot Extension（見 [安裝指南](INSTALL.md)）
+2. 啟動單一共用 HTTP MCP 服務；Extension 會自動連入其 WebSocket server
 
 ### 設定（一次性）
 
 使用 Codex CLI 加入：
 
 ```bash
-codex mcp add browse-pilot -- bp_cli --mcp --browser firefox --port 9222 --timeout 60000
+bp_cli --mcp-http --browser firefox --port 9222 --mcp-port 8931 --timeout 60000
+codex mcp add browse-pilot --url http://127.0.0.1:8931/mcp
 ```
 
-Codex 啟動 MCP 時，`bp_cli --mcp --browser firefox --port 9222 --timeout 60000` 會先啟動 WS server 並回應 MCP 協議握手，Extension 隨後自動連入。Tool 呼叫時若 Extension 尚未連入，會自動等待（最多 60 秒）。
+多個 Codex 工作階段會連入同一個 `http://127.0.0.1:8931/mcp`。MCP 可先完成初始化，Extension 隨後自動連入 WebSocket；Tool 呼叫時若 Extension 尚未連入，會自動等待（最多 60 秒）。
 
 ### 操作範例：自動登入並抓取資料
 

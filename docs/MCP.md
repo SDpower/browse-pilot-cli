@@ -1,25 +1,30 @@
 # MCP、Skill 與 Plugin 整合指南
 
-Browse Pilot 的正式整合方式是本機 Plugin：以 Skill 告訴模型操作流程，以 STDIO MCP Server 提供工具，再由本機瀏覽器 Extension 橋接 Firefox、Chrome 或 Edge。Extension 是本機元件，不以瀏覽器商店上架為發布目標。
+Browse Pilot 的正式整合方式是本機 Plugin：以 Skill 告訴模型操作流程，以共用 Streamable HTTP MCP Server 提供工具，再由本機 Firefox Extension 橋接使用者目前的網頁。Extension 是本機元件，不以瀏覽器商店上架為發布目標。
 
 ## 支援環境
 
 - Codex CLI
 - ChatGPT Desktop 的 Codex 與 Work
 - Codex IDE extension 的 MCP Server
-- Claude Code 相容模式
+- 支援 Streamable HTTP MCP 的其他本機 client
 
-ChatGPT 網頁版不會讀取本機 STDIO MCP；目前套件應在具有 Codex Host 的本機環境使用。
+ChatGPT 網頁版不會直接存取 `127.0.0.1` 的本機 MCP；目前套件應在具有 Codex Host 的本機環境使用。
 
 ## 前置需求
 
 1. 建置並安裝 `bp_cli`，確認可從 `PATH` 執行。
 2. 執行 `bash scripts/build-extensions.sh`。
-3. 以瀏覽器開發者模式載入對應目錄：
-   - Firefox：`dist/firefox/manifest.json`
-   - Chrome：`dist/chrome/`
-   - Edge：`dist/edge/`
-4. Chrome 或 Edge 另執行 `bp_cli setup chrome` 或 `bp_cli setup edge`；Firefox 使用 WebSocket，不需要 Native Messaging Host。
+3. 在 Firefox 的 `about:debugging` 載入 `dist/firefox/manifest.json`。
+4. 啟動單一共用服務：
+
+```bash
+bp_cli --mcp-http --browser firefox --port 9222 --mcp-port 8931 --timeout 60000
+```
+
+## 從 0.1.x 移轉
+
+`0.2.0` 不再提供 stdio `--mcp`。請停止舊的 `bp_cli --mcp` 程序，改為只啟動一份上述 HTTP 服務；Codex Plugin 或手動 MCP 設定都連線至 `http://127.0.0.1:8931/mcp`。重新安裝 Plugin 並開啟新的 Codex 工作階段後，其他工作階段即可共用同一服務。
 
 ## 透過 Codex Plugin 安裝
 
@@ -30,10 +35,10 @@ codex plugin marketplace add /absolute/path/to/browse-pilot-cli
 codex plugin add browse-pilot@browse-pilot-marketplace
 ```
 
-安裝完成後請開啟新工作階段。Plugin 預設啟動 Firefox MCP：
+安裝完成後請開啟新工作階段。Plugin 會連到以下共用 endpoint：
 
 ```text
-bp_cli --mcp --browser firefox --port 9222 --timeout 60000
+http://127.0.0.1:8931/mcp
 ```
 
 Plugin 結構：
@@ -51,7 +56,7 @@ plugins/browse-pilot/
 不使用 Plugin 時，可直接加入 Codex MCP：
 
 ```bash
-codex mcp add browse-pilot -- bp_cli --mcp --browser firefox --port 9222 --timeout 60000
+codex mcp add browse-pilot --url http://127.0.0.1:8931/mcp
 ```
 
 檢查是否已載入：
@@ -60,28 +65,15 @@ codex mcp add browse-pilot -- bp_cli --mcp --browser firefox --port 9222 --timeo
 codex mcp list
 ```
 
-ChatGPT Desktop、Codex CLI 與 Codex IDE extension 會共用同一 Codex Host 的 MCP 設定。也可在 ChatGPT Desktop 的 Settings → MCP servers 新增 STDIO Server，命令使用 `bp_cli`，參數使用：
+ChatGPT Desktop、Codex CLI 與 Codex IDE extension 會共用同一 Codex Host 的 MCP 設定。也可在 ChatGPT Desktop 的 Settings → MCP servers 新增 Streamable HTTP Server，URL 使用：
 
 ```text
---mcp --browser firefox --port 9222 --timeout 60000
+http://127.0.0.1:8931/mcp
 ```
 
 ## 使用 Chrome 或 Edge
 
-Plugin 預設值以主要使用情境 Firefox 為準。若要改用其他瀏覽器，請修改 `plugins/browse-pilot/.mcp.json` 的 `args`：
-
-```json
-{
-  "mcpServers": {
-    "browse-pilot": {
-      "command": "bp_cli",
-      "args": ["--mcp", "--browser", "chrome", "--port", "9222", "--timeout", "60000"]
-    }
-  }
-}
-```
-
-變更 Plugin 後需重新安裝並開啟新工作階段。Chrome／Edge 使用 Native Messaging，正式使用前必須完成對應的 `bp_cli setup`。
+目前 Streamable HTTP MCP 模式僅支援 Firefox。Chrome／Edge 的一般 CLI 與 Extension 建置仍保留，但不納入這個 HTTP Plugin endpoint。
 
 ## 可用能力
 
@@ -115,20 +107,18 @@ MCP Server 提供 21 個工具，主要分為：
 ## 通訊架構
 
 ```text
-Codex / ChatGPT Desktop / Claude Code
-    │ MCP（stdio）
+Codex / ChatGPT Desktop / MCP client（可多個）
+    │ Streamable HTTP（127.0.0.1:8931/mcp）
     ▼
-bp_cli
-    ├── WebSocket ────────→ Firefox Extension
-    └── Native Messaging ─→ Chrome / Edge Extension
-                                 │
-                                 ▼
-                           使用者目前的網頁
+單一 bp_cli 共用服務
+    │ WebSocket（127.0.0.1:9222）
+    ▼
+Firefox Extension → 使用者目前的網頁
 ```
 
-STDIO MCP 啟動後，標準輸出只能包含 MCP 訊息；詳細日誌必須寫入標準錯誤。Firefox Extension 不必先連線，MCP Server 會先完成初始化，不等待 Extension；工具執行時才等待 Extension。若 Extension 斷線，該次工具呼叫會回傳 `ConnectionError`；Extension 重新連線後，可依錯誤的 `action` 重試。
+HTTP MCP 啟動後可立即接受多個 client 初始化，不必等待 Firefox Extension；工具執行時才等待 Extension。若 Extension 斷線，該次工具呼叫會回傳 `ConnectionError`；Extension 重新連線後，可依錯誤的 `action` 重試。
 
-若啟動時出現 `address already in use`，表示連接埠 `9222` 已由另一個程序佔用。請停止舊的 Browse Pilot MCP/CLI 程序，或移除重複的手動 MCP 設定；Plugin 與手動 `codex mcp add` 設定不得同時使用。
+若 `8931` 已被占用，先呼叫 `/healthz` 確認共用服務是否已存在；若 `9222` 被舊的 stdio MCP／CLI 程序占用，請停止舊程序後再啟動唯一的 HTTP MCP 服務。Plugin 與手動 `codex mcp add` 可指向同一服務，但建議只保留一種設定，以免工具名稱重複。
 
 ## 工具錯誤格式與處理
 

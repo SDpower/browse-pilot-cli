@@ -1,11 +1,11 @@
 {
   "name": "browse-pilot",
-  "description": "Cross-browser automation — control Firefox/Chrome/Edge via WebExtension API",
-  "version": "0.1.4",
+  "description": "透過共用 Streamable HTTP MCP 操作本機 Firefox",
+  "version": "0.2.0",
   "mcpServers": {
     "browse-pilot": {
-      "command": "bp_cli",
-      "args": ["--mcp", "--browser", "firefox", "--port", "9222", "--timeout", "60000"]
+      "type": "http",
+      "url": "http://127.0.0.1:8931/mcp"
     }
   }
 }

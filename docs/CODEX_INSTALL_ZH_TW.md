@@ -1,6 +1,6 @@
 # Codex 安裝與使用指南
 
-本指南說明如何以 Codex Plugin 使用 Browse Pilot 控制本機 Firefox。Plugin 會自動啟動本機 STDIO MCP Server；一般使用時不需要手動執行 MCP 指令。
+本指南說明如何以 Codex Plugin 使用 Browse Pilot 控制本機 Firefox。單一 Streamable HTTP MCP 服務可供多個 Codex 工作階段共用，避免各工作階段重複占用 Firefox WebSocket 埠號。
 
 ## 系統需求
 
@@ -26,6 +26,34 @@ bp_cli --version
 4. Firefox 重啟後，暫時載入的 Extension 會卸載；請回到同一頁重新載入 `dist/firefox/manifest.json`。
 
 Firefox 使用 WebSocket，不需要執行 `bp_cli setup firefox`。
+
+## 啟動共用 MCP 服務
+
+在一個獨立 Terminal 啟動一次本機服務；保持此程序執行，多個 Codex 工作階段即可共用：
+
+```bash
+bp_cli --mcp-http --browser firefox --port 9222 --mcp-port 8931 --timeout 60000
+```
+
+可用健康檢查確認服務與 Extension 狀態：
+
+```bash
+curl http://127.0.0.1:8931/healthz
+```
+
+## 從 0.1.x 升級
+
+`0.2.0` 已移除 stdio `--mcp`。升級時先停止所有以 `bp_cli --mcp` 啟動的舊程序，再建置新版 CLI、啟動唯一的共用 HTTP 服務，並重新安裝 Plugin：
+
+```bash
+go build -o ~/.local/bin/bp_cli ./cmd/bp/
+bp_cli --version
+bp_cli --mcp-http --browser firefox --port 9222 --mcp-port 8931 --timeout 60000
+codex plugin remove browse-pilot@browse-pilot-marketplace
+codex plugin add browse-pilot@browse-pilot-marketplace
+```
+
+`bp_cli --version` 應顯示 `0.2.0`。完成後請開啟新的 Codex 工作階段；舊工作階段不會自動重新載入 MCP 設定。
 
 ## 安裝 Codex Plugin
 
@@ -56,12 +84,12 @@ codex mcp list
 
 ```text
 browse-pilot@browse-pilot-marketplace  installed, enabled
-browse-pilot  bp_cli  --mcp --browser firefox --port 9222 --timeout 60000
+browse-pilot  http://127.0.0.1:8931/mcp
 ```
 
 ## 開始使用
 
-安裝完成後開啟新的 Codex 工作階段。Plugin 會自動啟動 MCP Server，請不要另外手動執行 MCP 指令。確認 Firefox Extension 已載入後，可直接用自然語言要求瀏覽器操作。
+安裝完成後開啟新的 Codex 工作階段。確認共用 MCP 服務與 Firefox Extension 已啟動後，可直接用自然語言要求瀏覽器操作；不需要為每個 Codex 工作階段另開一個 `bp_cli`。
 
 中文範例：
 
@@ -87,7 +115,7 @@ Use Browse Pilot to open this Threads URL and return the post title and body.
 
 ### `address already in use`
 
-代表連接埠 `9222` 已被其他程序佔用。停止佔用該連接埠的舊 MCP/CLI 程序，或只保留一個 Browse Pilot MCP 設定後重開 Codex 工作階段。
+若是 `8931`，先以 `curl http://127.0.0.1:8931/healthz` 判斷共用服務是否已在執行；已執行時不應再啟動第二份。若是 `9222`，請停止舊的 stdio MCP／CLI 程序，再啟動唯一的 HTTP MCP 服務。
 
 ### `Handler is not defined`
 
@@ -109,12 +137,12 @@ codex plugin add browse-pilot@browse-pilot-marketplace
 
 本機 marketplace 則先更新本機原始碼後，執行移除、重新安裝與開啟新工作階段的後兩個步驟。
 
-## 手動 MCP 備案
+## 不使用 Plugin 的直接 MCP 設定
 
-只有在不使用 Plugin 時才加入手動 MCP Server；不得與 Plugin 同時使用，以免兩個程序競爭連接埠 `9222`。
+若不使用 Plugin，可直接把同一個 HTTP endpoint 加入 Codex。Plugin 與此設定只選一種，避免出現重複工具名稱。
 
 ```bash
-codex mcp add browse-pilot -- bp_cli --mcp --browser firefox --port 9222 --timeout 60000
+codex mcp add browse-pilot --url http://127.0.0.1:8931/mcp
 ```
 
 移除此手動設定：
@@ -125,11 +153,12 @@ codex mcp remove browse-pilot
 
 ## 更新與移除
 
-更新前先重新建置 CLI 與 Extension：
+更新前先停止共用 MCP 服務，再重新建置 CLI 與 Extension，最後以相同命令重新啟動服務：
 
 ```bash
 go build -o ~/.local/bin/bp_cli ./cmd/bp/
 bash scripts/build-extensions.sh
+bp_cli --mcp-http --browser firefox --port 9222 --mcp-port 8931 --timeout 60000
 ```
 
 開發本機 Plugin 時，將 `plugins/browse-pilot/.codex-plugin/plugin.json` 的 `version` 更新為單一 `<原版本>+codex.<cachebuster>` 後重新安裝，並在 Firefox 對 `dist/firefox/manifest.json` 按「重新載入」：

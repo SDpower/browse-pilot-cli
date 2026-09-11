@@ -1,6 +1,6 @@
 {
   "name": "browse-pilot-cli",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "跨瀏覽器自動化 CLI — WebExtension 部分",
   "private": true,
   "scripts": {

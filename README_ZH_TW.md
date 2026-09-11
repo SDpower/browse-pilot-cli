@@ -1,6 +1,6 @@
 # browse-pilot-cli (bp)
 
-[![Version](https://img.shields.io/badge/version-0.1.4-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 跨瀏覽器自動化 CLI 工具，透過 WebExtension API 控制 Firefox、Chrome、Edge，不依賴 CDP。
@@ -29,7 +29,7 @@ codex plugin marketplace add SDpower/browse-pilot-cli
 codex plugin add browse-pilot@browse-pilot-marketplace
 ```
 
-Plugin 會一併載入 Browse Pilot Skill 與本機 STDIO MCP Server。安裝後請開啟新的 Codex 工作階段。
+Plugin 會一併載入 Browse Pilot Skill，並連到共用的本機 Streamable HTTP MCP Server。先啟動一次共用服務，安裝後再開啟新的 Codex 工作階段。
 
 ### 手動安裝
 
@@ -163,7 +163,8 @@ bp_cli python --reset
 | `--json` | JSON 格式輸出 | false |
 | `--timeout` | 逾時時間（毫秒） | 30000 |
 | `--verbose` | 詳細日誌 | false |
-| `--mcp` | 以 MCP server 模式執行 | false |
+| `--mcp-http` | 啟動 Streamable HTTP MCP server | false |
+| `--mcp-port` | Streamable HTTP MCP 埠號 | 8931 |
 | `--session` | 連線 session 名稱 | default |
 | `--native-messaging` | 以 NM host 模式啟動 | false |
 
@@ -263,10 +264,11 @@ bp_cli python --reset
 
 ### 設定
 
-不使用 Plugin 時，可直接加入 Codex MCP：
+先啟動一次共用本機服務，再將 URL 加入 Codex：
 
 ```bash
-codex mcp add browse-pilot -- bp_cli --mcp --browser firefox --port 9222 --timeout 60000
+bp_cli --mcp-http --browser firefox --port 9222 --mcp-port 8931 --timeout 60000
+codex mcp add browse-pilot --url http://127.0.0.1:8931/mcp
 ```
 
 ### 可用 MCP Tools
@@ -297,11 +299,10 @@ codex mcp add browse-pilot -- bp_cli --mcp --browser firefox --port 9222 --timeo
 
 ```
 Codex / ChatGPT Desktop / AI Agent
-    │ MCP protocol (stdio)
+    │ Streamable HTTP MCP（127.0.0.1:8931/mcp）
     ▼
 browse-pilot-cli (Go binary)
-    ├── WebSocket Server ──→ Firefox Extension (MV2，持久背景頁)
-    └── Native Messaging ──→ Chrome/Edge Extension (MV3，service worker)
+    └── WebSocket Server ──→ Firefox Extension (MV2，持久背景頁)
                                     │
                                     ▼
                               Content Script → 目標網頁

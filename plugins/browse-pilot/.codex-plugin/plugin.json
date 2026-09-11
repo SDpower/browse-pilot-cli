@@ -1,7 +1,7 @@
 {
   "name": "browse-pilot",
-  "version": "0.1.4",
-  "description": "\u900f\u904e\u672c\u6a5f MCP Server \u63a7\u5236 Firefox\u3001Chrome \u6216 Edge",
+  "version": "0.2.0",
+  "description": "\u900f\u904e\u5171\u7528\u672c\u6a5f HTTP MCP Server \u63a7\u5236 Firefox",
   "author": {
     "name": "SteveLuo",
     "url": "https://github.com/SDpower"
@@ -14,15 +14,14 @@
     "automation",
     "mcp",
     "firefox",
-    "chrome",
-    "edge"
+    "streamable-http"
   ],
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Browse Pilot",
     "shortDescription": "\u900f\u904e MCP \u64cd\u4f5c\u672c\u6a5f\u700f\u89bd\u5668",
-    "longDescription": "\u8b93 Codex \u6216 ChatGPT Desktop \u900f\u904e Browse Pilot MCP Server \u5c0e\u822a\u3001\u8b80\u53d6\u53ca\u64cd\u4f5c\u672c\u6a5f Firefox\u3001Chrome \u6216 Edge\u3002",
+    "longDescription": "\u8b93 Codex \u6216 ChatGPT Desktop \u900f\u904e\u5171\u7528\u7684 Browse Pilot Streamable HTTP MCP Server \u5c0e\u822a\u3001\u8b80\u53d6\u53ca\u64cd\u4f5c\u672c\u6a5f Firefox\u3002",
     "developerName": "SteveLuo",
     "category": "Productivity",
     "capabilities": [

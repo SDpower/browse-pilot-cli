@@ -1,6 +1,6 @@
 # Codex Installation and Usage Guide
 
-This guide explains how to use Browse Pilot with the Codex Plugin to control local Firefox. The Plugin starts the local STDIO MCP Server automatically; you do not need to run the MCP command manually during normal use.
+This guide explains how to use Browse Pilot with the Codex Plugin to control local Firefox. One Streamable HTTP MCP service can be shared by multiple Codex sessions, avoiding duplicate processes competing for the Firefox WebSocket port.
 
 ## System requirements
 
@@ -26,6 +26,34 @@ bp_cli --version
 4. Firefox unloads temporary extensions after a restart; return to the same page and load `dist/firefox/manifest.json` again.
 
 Firefox uses WebSocket, so do not run `bp_cli setup firefox`.
+
+## Start the shared MCP service
+
+Start the local service once in a separate terminal and keep it running. Multiple Codex sessions can share it:
+
+```bash
+bp_cli --mcp-http --browser firefox --port 9222 --mcp-port 8931 --timeout 60000
+```
+
+Use the health endpoint to verify both the service and Extension state:
+
+```bash
+curl http://127.0.0.1:8931/healthz
+```
+
+## Upgrade from 0.1.x
+
+Version `0.2.0` removes the stdio `--mcp` mode. Stop every old process started with `bp_cli --mcp`, then build the new CLI, start the single shared HTTP service, and reinstall the Plugin:
+
+```bash
+go build -o ~/.local/bin/bp_cli ./cmd/bp/
+bp_cli --version
+bp_cli --mcp-http --browser firefox --port 9222 --mcp-port 8931 --timeout 60000
+codex plugin remove browse-pilot@browse-pilot-marketplace
+codex plugin add browse-pilot@browse-pilot-marketplace
+```
+
+`bp_cli --version` should print `0.2.0`. Open a new Codex session afterward; existing sessions do not automatically reload the MCP configuration.
 
 ## Install the Codex Plugin
 
@@ -56,12 +84,12 @@ Expect to see:
 
 ```text
 browse-pilot@browse-pilot-marketplace  installed, enabled
-browse-pilot  bp_cli  --mcp --browser firefox --port 9222 --timeout 60000
+browse-pilot  http://127.0.0.1:8931/mcp
 ```
 
 ## Start using it
 
-Open a new Codex session after installation. The Plugin starts the MCP Server automatically, so do not start the MCP command separately. Once the Firefox Extension is loaded, ask for browser operations in natural language.
+Open a new Codex session after installation. Once the shared MCP service and Firefox Extension are running, ask for browser operations in natural language. Do not start one `bp_cli` process per Codex session.
 
 中文範例：
 
@@ -87,7 +115,7 @@ Each tool call waits for at most 60 seconds. Confirm that the Extension and targ
 
 ### `address already in use`
 
-Port `9222` is occupied by another process. Stop the old MCP/CLI process using that port, or keep only one Browse Pilot MCP configuration, then open a new Codex session.
+For port `8931`, first run `curl http://127.0.0.1:8931/healthz`; if it succeeds, the shared service is already running and a second copy is unnecessary. For port `9222`, stop the old stdio MCP/CLI process, then start the single HTTP MCP service.
 
 ### `Handler is not defined`
 
@@ -109,12 +137,12 @@ codex plugin add browse-pilot@browse-pilot-marketplace
 
 For a local marketplace, update the local checkout first, then perform the latter two commands and open a new session.
 
-## Manual MCP fallback
+## Direct MCP configuration without the Plugin
 
-Add a manual MCP Server only when you are not using the Plugin. Do not use it with the Plugin, because two processes would compete for port `9222`.
+When not using the Plugin, add the same HTTP endpoint directly. Choose either the Plugin or this configuration to avoid duplicate tool names.
 
 ```bash
-codex mcp add browse-pilot -- bp_cli --mcp --browser firefox --port 9222 --timeout 60000
+codex mcp add browse-pilot --url http://127.0.0.1:8931/mcp
 ```
 
 To remove this manual configuration:
@@ -125,11 +153,12 @@ codex mcp remove browse-pilot
 
 ## Update and remove
 
-Rebuild the CLI and Extension before updating:
+Stop the shared MCP service before updating, then rebuild the CLI and Extension and restart the service with the same command:
 
 ```bash
 go build -o ~/.local/bin/bp_cli ./cmd/bp/
 bash scripts/build-extensions.sh
+bp_cli --mcp-http --browser firefox --port 9222 --mcp-port 8931 --timeout 60000
 ```
 
 When developing the local Plugin, update `version` in `plugins/browse-pilot/.codex-plugin/plugin.json` to one `<base-version>+codex.<cachebuster>` suffix, reinstall, then click “Reload” for `dist/firefox/manifest.json` in Firefox:

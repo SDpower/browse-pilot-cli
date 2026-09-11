@@ -33,6 +33,7 @@ func RegisterAllTools(s *Server) {
 		Name:        "bp_state",
 		Description: "取得當前頁面 URL、標題、瀏覽器類型及可互動元素列表（含索引）",
 		InputSchema: map[string]any{"type": "object", "properties": map[string]any{}},
+		ReadOnly:    true,
 		Handler: func(ctx context.Context, params json.RawMessage) (any, error) {
 			return s.callExtensionRaw(ctx, "get_state", nil)
 		},
@@ -91,6 +92,7 @@ func RegisterAllTools(s *Server) {
 	s.RegisterTool(&Tool{
 		Name:        "bp_screenshot",
 		Description: "截取當前頁面截圖，回傳 base64 編碼圖片",
+		ReadOnly:    true,
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -155,6 +157,7 @@ func RegisterAllTools(s *Server) {
 	s.RegisterTool(&Tool{
 		Name:        "bp_wait",
 		Description: "等待頁面上的條件成立",
+		ReadOnly:    true,
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -199,6 +202,7 @@ func RegisterAllTools(s *Server) {
 	s.RegisterTool(&Tool{
 		Name:        "bp_get",
 		Description: "取得頁面或元素的資訊",
+		ReadOnly:    true,
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{

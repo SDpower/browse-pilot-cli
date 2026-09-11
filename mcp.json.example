@@ -1,8 +1,7 @@
 {
   "mcpServers": {
     "browse-pilot": {
-      "command": "bp_cli",
-      "args": ["--mcp", "--browser", "firefox", "--port", "9222", "--timeout", "60000"]
+      "url": "http://127.0.0.1:8931/mcp"
     }
   }
 }
